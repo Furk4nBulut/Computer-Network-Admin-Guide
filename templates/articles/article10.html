@@ -1,0 +1,297 @@
+{% load static %}
+<section id="article10" class="article-section">
+    <div id="resources" class="resources-box">
+    <h2 class="resources-title">Resources</h2>
+    <div class="resource-item">
+        <img src="https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Ficon-library.com%2Fimages%2Ffile-icon%2Ffile-icon-28.jpg&f=1&nofb=1&ipt=c32f79da585079a968a15d585a2055db6b486f9743393e20862e5d9634c9944c" alt="File Icon" class="file-icon" />
+        <div class="resource-details">
+            <span>Cisco Packet Tracer</span>
+            <a href="{% static 'Cisco-Packet-Tracer/Article10/TCP-Handshake-definition.pkt' %}" target="_blank" class="download-btn">Download</a>
+        </div>
+    </div>
+</div>
+
+    <h1 class="article-title">L4 - Resolving TCP Three-Way Handshake Failures in a University Network: A Real-World Guide</h1>
+    <div class="article-authors">
+        <strong>Furkan Bulut, 210316011@ogr.cbu.edu.tr</strong><br/>
+        Department of Computer Engineering, Manisa Celal Bayar University
+    </div>
+
+    <div class="article-abstract">
+        <div class="abstract-title">Abstract</div>
+        <p class="no-indent">
+            In a university network, a misconfigured Access Control List (ACL) blocking TCP ACK packets can disrupt critical services like e-learning portals by preventing the TCP three-way handshake from completing. This guide presents a real-world scenario where students and faculty cannot access a web server due to this issue, impacting Layer 4 (transport) and Layer 7 (application). Using Cisco Packet Tracer for simulation and real-world tools like Wireshark and Cisco IOS commands, this guide provides a practical framework for diagnosing the issue, reconfiguring ACLs, and verifying connectivity. It equips administrators with actionable steps to resolve and prevent TCP handshake failures, ensuring reliable service delivery in a university environment.
+        </p>
+    </div>
+
+    <div class="section-title" id="introduction">1. INTRODUCTION</div>
+    <p>
+        In a university setting, reliable access to web-based services like e-learning platforms is critical for academic operations. The Transmission Control Protocol (TCP) ensures this reliability through its three-way handshake (SYN, SYN-ACK, ACK) at Layer 4, establishing connections for services like HTTP. However, a misconfigured router ACL blocking ACK packets can halt this process, causing connection timeouts and rendering services inaccessible. This guide is inspired by a real-world scenario at a university where such a misconfiguration disrupted access to the e-learning portal, affecting hundreds of users.
+    </p>
+    <p>
+        Using Cisco Packet Tracer to simulate the issue and real-world tools like Wireshark and Cisco IOS, this guide walks you through identifying the problem, correcting the ACL, and verifying the fix. It also provides preventive strategies to avoid similar issues, making it a practical resource for network administrators facing this common yet critical issue.
+    </p>
+
+    <div class="section-title" id="problem-description">2. REAL-WORLD SCENARIO AND PROBLEM DEFINITION</div>
+    <h3>2.1 Scenario: A University Network Crisis</h3>
+    <p>
+        It’s 9 AM on a Monday at Manisa Celal Bayar University, and the IT helpdesk is flooded with complaints. Students and faculty report that the e-learning portal (http://192.168.1.100) is down, displaying a “connection timed out” error in browsers. This portal hosts lecture notes, assignments, and online exams, making its downtime a critical issue. Initial tests show that users can ping the server and access email, ruling out a complete network outage. The issue appears specific to HTTP (TCP port 80), suggesting a problem with TCP connection establishment.
+    </p>
+    <p>
+        As the network administrator, you log into the core router (R1) and notice a recently applied ACL intended to secure the network. However, this ACL is blocking TCP ACK packets, preventing the TCP three-way handshake from completing. The impact is severe:
+    </p>
+    <ul>
+        <li><strong>Service Disruption:</strong> Students cannot submit assignments or access lecture materials.</li>
+        <li><strong>Faculty Frustration:</strong> Professors cannot update course content or grade submissions.</li>
+        <li><strong>Administrative Overhead:</strong> The IT team faces pressure to restore service quickly.</li>
+    </ul>
+    <figure>
+        <img src="{% static 'article_images/article10/req_timeout.png' %}" alt="HTTP Request Timeout Error" />
+        <figcaption><strong>Figure 1:</strong> Browser screenshot from a user’s PC (192.168.1.10) showing a “connection timed out” error when accessing the e-learning portal.</figcaption>
+    </figure>
+
+    <h3>2.2 Why This Happens in Real Life</h3>
+    <p>
+        In real-world networks, ACLs are often implemented to enhance security, such as blocking unauthorized access to servers. However, an overly restrictive ACL, like one denying packets with the ACK flag, can inadvertently block legitimate TCP traffic. This might occur due to:
+    </p>
+    <ul>
+        <li><strong>Misconfiguration:</strong> An admin mistakenly denies “established” TCP connections.</li>
+        <li><strong>Security Overreach:</strong> A new security policy blocks more traffic than intended.</li>
+        <li><strong>Lack of Testing:</strong> Changes are applied without verifying their impact on services.</li>
+    </ul>
+    <p>
+        The result is a failed TCP handshake, where the client sends a SYN, the server responds with a SYN-ACK, but the client’s ACK is dropped, causing a timeout.
+    </p>
+    <figure>
+        <img src="{% static 'article_images/article10/error2.png' %}" alt="Packet Tracer Error" />
+        <figcaption><strong>Figure 2:</strong> Cisco Packet Tracer simulation showing the TCP handshake failure due to a blocked ACK packet.</figcaption>
+    </figure>
+
+    <div class="section-title" id="osi-analysis">3. OSI MODEL ANALYSIS</div>
+    <p>
+        The issue spans multiple OSI layers, with the core problem at Layer 4:
+    </p>
+    <table>
+        <tr><th>OSI Layer</th><th>Real-World Impact</th></tr>
+        <tr><td>Layer 2 (Data Link)</td><td>Unrestricted VLAN allows all devices in the subnet to communicate, but the issue lies higher up.</td></tr>
+        <tr><td>Layer 3 (Network)</td><td>Router forwards packets to the server, but the ACL filters them incorrectly.</td></tr>
+        <tr><td>Layer 4 (Transport)</td><td>ACL blocks TCP ACK packets, halting the handshake and preventing session establishment.</td></tr>
+        <tr><td>Layer 7 (Application)</td><td>HTTP service fails, resulting in timeout errors for users accessing the e-learning portal.</td></tr>
+    </table>
+    <p>
+        Fixing this requires adjusting the Layer 4 ACL to allow ACK packets and verifying Layer 7 service restoration.
+    </p>
+
+    <div class="section-title" id="topology">4. NETWORK TOPOLOGY</div>
+    <p>
+        The university’s network is a flat topology, typical of a small campus LAN, simulated in Cisco Packet Tracer for testing:
+    </p>
+    <pre>
+          [User PC: 192.168.1.10]
+                  |
+            [Switch: S1] —— [Test PC: 192.168.1.20]
+                  |
+               [Router: R1, 192.168.1.1]
+                  |
+         [Web Server: 192.168.1.100]
+    </pre>
+    <ul>
+        <li><strong>Router (R1):</strong> Cisco 2911, Interface Fa0/0, IP 192.168.1.1/24, default gateway.</li>
+        <li><strong>Switch (S1):</strong> Cisco Catalyst 2950, connects all devices in VLAN 1 (192.168.1.0/24).</li>
+        <li><strong>User PC (PC0):</strong> IP 192.168.1.10, used by students/faculty. Gateway: 192.168.1.1.</li>
+        <li><strong>Test PC (PC1):</strong> IP 192.168.1.20, used by IT for testing. Gateway: 192.168.1.1.</li>
+        <li><strong>Web Server (Server0):</strong> IP 192.168.1.100, hosts e-learning portal on HTTP (port 80). Gateway: 192.168.1.1.</li>
+    </ul>
+    <figure>
+        <img src="{% static 'article_images/article10/user_packet_on_server.png' %}" alt="Network Topology" />
+        <figcaption><strong>Figure 3:</strong> Network topology showing User PC, Test PC, Switch, Router, and Web Server in Cisco Packet Tracer.</figcaption>
+    </figure>
+
+    <div class="section-title" id="real-world-diagnosis">5. DIAGNOSING THE ISSUE IN REAL LIFE</div>
+    <h3>5.1 Initial Observations</h3>
+    <p>
+        As an admin, you start by confirming user reports:
+    </p>
+    <ul>
+        <li><strong>User Feedback:</strong> Students report “connection timed out” when accessing http://192.168.1.100 (Figure 1).</li>
+        <li><strong>Basic Tests:</strong> From User PC (192.168.1.10), run:
+            <pre>ping 192.168.1.100</pre>
+            Result: Successful, indicating Layer 3 connectivity.
+            <pre>telnet 192.168.1.100 80</pre>
+            Result: Connection fails, suggesting a TCP issue.
+        </li>
+    </ul>
+
+    <h3>5.2 Packet Analysis with Wireshark</h3>
+    <p>
+        To pinpoint the issue, capture packets on the User PC or router interface:
+    </p>
+    <ul>
+        <li><strong>Setup:</strong> Install Wireshark on User PC or mirror the router’s Fa0/0 port to a monitoring device.</li>
+        <li><strong>Filter:</strong> Use <code>tcp.port == 80 and ip.addr == 192.168.1.100</code>.</li>
+        <li><strong>Observation:</strong> SYN sent, SYN-ACK received, but ACK is missing, indicating the router drops the ACK packet.
+        </li>
+    </ul>
+    <figure>
+        <img src="{% static 'article_images/article10/user_send_p.png' %}" alt="User Sending Packet" />
+        <figcaption><strong>Figure 4:</strong> Wireshark capture (simulated in Packet Tracer) showing User PC sending a TCP SYN packet to the web server.</figcaption>
+    </figure>
+    <figure>
+        <img src="{% static 'article_images/article10/server_packet_error.png' %}" alt="Server Packet Error" />
+        <figcaption><strong>Figure 5:</strong> Server failing to receive ACK packet, halting the TCP handshake (Packet Tracer simulation).</figcaption>
+    </figure>
+
+    <h3>5.3 Checking Router Logs</h3>
+    <p>
+        Log into the router (R1) to check for blocked traffic:
+    </p>
+    <pre>
+Router# show logging
+</pre>
+    <p>
+        Look for entries indicating denied TCP packets to 192.168.1.100 on port 80 with the ACK flag. This confirms the ACL is the culprit.
+    </p>
+    <figure>
+        <img src="{% static 'article_images/article10/user_packet_on_router.png' %}" alt="Packet Blocked at Router" />
+        <figcaption><strong>Figure 6:</strong> Router log (simulated in Packet Tracer) showing the ACL blocking the User PC’s ACK packet.</figcaption>
+    </figure>
+
+    <div class="section-title" id="implementation">6. RESOLVING THE ISSUE IN REAL LIFE</div>
+    <h3>6.1 Reviewing the Faulty ACL</h3>
+    <p>
+        Check the current ACL configuration:
+    </p>
+    <pre>
+Router# show running-config | include access-list
+access-list 110 deny tcp any host 192.168.1.100 established
+access-list 110 permit ip any any
+    </pre>
+    <p>
+        The <code>deny tcp any host 192.168.1.100 established</code> rule blocks packets with the ACK flag, breaking the TCP handshake.
+    </p>
+
+    <h3>6.2 Correcting the ACL</h3>
+    <p>
+        Replace the faulty ACL to allow HTTP traffic and established connections:
+    </p>
+    <pre>
+Router> enable
+Router# configure terminal
+Router(config)# no access-list 110
+Router(config)# access-list 110 permit tcp any host 192.168.1.100 eq 80
+Router(config)# access-list 110 permit tcp any host 192.168.1.100 established
+Router(config)# access-list 110 permit ip any any
+Router(config)# interface fa0/0
+Router(config-if)# ip access-group 110 in
+Router(config-if)# exit
+Router(config)# end
+Router# copy running-config startup-config
+    </pre>
+    <p><strong>Explanation:</strong></p>
+    <ul>
+        <li><code>no access-list 110</code>: Removes the problematic ACL.</li>
+        <li><code>permit tcp any host 192.168.1.100 eq 80</code>: Allows initial HTTP connections.</li>
+        <li><code>permit tcp any host 192.168.1.100 established</code>: Permits ACK packets for established sessions.</li>
+        <li><code>permit ip any any</code>: Ensures other traffic is unaffected.</li>
+    </ul>
+
+    <h3>6.3 Verifying the Fix</h3>
+    <p>
+        Test connectivity from User PC (192.168.1.10):
+    </p>
+    <ul>
+        <li><strong>Browser Test:</strong> Access http://192.168.1.100. The e-learning portal should load.</li>
+        <li><strong>Telnet Test:</strong>
+            <pre>telnet 192.168.1.100 80</pre>
+            Expected result: Connection opens, indicating successful TCP handshake.
+        </li>
+        <li><strong>Wireshark:</strong> Confirm SYN, SYN-ACK, and ACK packets flow correctly.</li>
+    </ul>
+    <figure>
+        <img src="{% static 'article_images/article10/after_problem_solved.png' %}" alt="After Problem Solved" />
+        <figcaption><strong>Figure 7:</strong> Successful HTTP connection after correcting the ACL, showing a completed TCP handshake.</figcaption>
+    </figure>
+
+    <h3>6.4 Troubleshooting Common Issues</h3>
+    <p>
+        If the issue persists:
+    </p>
+    <ul>
+        <li><strong>ACL Order:</strong> Verify with <code>show access-lists 110</code>. Ensure “permit” rules precede “deny” rules.</li>
+        <li><strong>Interface Check:</strong> Confirm ACL is applied correctly with <code>show ip interface fa0/0</code>.</li>
+        <li><strong>Logs:</strong> Check <code>show logging</code> for unexpected denials.</li>
+        <li><strong>Server Issue:</strong> Verify the web server’s HTTP service is running with <code>netstat -an | find "80"</code> on the server.</li>
+    </ul>
+
+    <div class="section-title" id="prevention">7. PREVENTING FUTURE ISSUES</div>
+    <h3>7.1 Proactive Measures</h3>
+    <p>
+        To avoid similar issues in the future:
+    </p>
+    <ul>
+        <li><strong>Test Changes:</strong> Before applying ACLs, test them in a lab environment (e.g., Cisco Packet Tracer).</li>
+        <li><strong>Monitor Traffic:</strong> Use NetFlow or Wireshark to detect TCP handshake failures early.</li>
+        <li><strong>Stateful Firewalls:</strong> Replace static ACLs with Cisco ASA for dynamic TCP session tracking.</li>
+        <li><strong>Change Management:</strong> Document and review all ACL changes before deployment.</li>
+    </ul>
+
+    <h3>7.2 Training and Documentation</h3>
+    <p>
+        Train IT staff on TCP/IP fundamentals and ACL configuration. Maintain a network configuration repository with detailed ACL and topology documentation. Encourage users to report timeout errors promptly to expedite diagnosis.
+    </p>
+
+    <div class="section-title" id="simulation">8. SIMULATING THE ISSUE FOR TRAINING</div>
+    <p>
+        To prepare for such issues, simulate the scenario in Cisco Packet Tracer:
+    </p>
+    <p>
+        <strong>Simulation File:</strong> <a href="https://drive.google.com/drive/folders/1feWwjfv6DXtDuULtjktu0HplKTcY-zqo?usp=sharing">TCP_Handshake_Simulation.pkt</a>
+    </p>
+    <ol>
+        <li>Load the .pkt file in Cisco Packet Tracer (version 8.2+).</li>
+        <li>Reproduce the issue: Apply the faulty ACL and test HTTP access from PC0 (192.168.1.10).</li>
+        <li>Correct the ACL as shown in Section 6.2.</li>
+        <li>Verify connectivity and use simulation mode to visualize packet flow (Figures 4–7).</li>
+    </ol>
+
+    <div class="section-title" id="conclusion">9. CONCLUSION AND RECOMMENDATIONS</div>
+    <p>
+        This guide addresses a real-world TCP three-way handshake failure caused by an ACL blocking ACK packets, a common issue in university networks. By diagnosing the problem with Wireshark and router logs, correcting the ACL, and verifying connectivity, administrators can restore critical services like the e-learning portal. The Cisco Packet Tracer simulation reinforces the learning process, while proactive measures like monitoring and training prevent recurrence. This framework ensures reliable network operations and rapid issue resolution.
+    </p>
+    <p><strong>Recommendations:</strong></p>
+    <ul>
+        <li>Always test ACL changes in a lab environment before deployment.</li>
+        <li>Use stateful firewalls for better TCP session management.</li>
+        <li>Monitor network traffic regularly to detect anomalies.</li>
+        <li>Train IT staff on TCP/IP troubleshooting and Cisco IOS commands.</li>
+    </ul>
+
+    <div class="section-title" id="keywords">10. Keywords</div>
+    <p class="no-indent"><em>TCP Three-Way Handshake, Layer 4, Access Control Lists, Network Security, Cisco Packet Tracer, HTTP Failure, ACK Packet, University Network</em></p>
+
+    <div class="section-title" id="appendices">11. APPENDICES</div>
+    <p>
+        <strong>CLI Configuration Dump:</strong>
+    </p>
+    <pre>
+Router# show running-config
+access-list 110 permit tcp any host 192.168.1.100 eq 80
+access-list 110 permit tcp any host 192.168.1.100 established
+access-list 110 permit ip any any
+interface FastEthernet0/0
+ ip address 192.168.1.1 255.255.255.0
+ ip access-group 110 in
+    </pre>
+    <p>
+        <strong>Packet Tracer File:</strong> <a href="https://drive.google.com/drive/folders/1wbLDXVjMyTTURq9lWB-dYaHSfyJViLRT?usp=sharing">TCP_Handshake_Simulation.pkt</a><br/>
+        <strong>Software Version:</strong> Cisco Packet Tracer 8.2
+    </p>
+
+    <div class="references" id="references">
+        <div class="references-title">REFERENCES</div>
+        <div class="reference">[1] Cisco Systems, <a href="https://www.cisco.com/c/en/us/support/docs/ip/access-lists/26448-ACLsamples.html">"Configuring IP Access Lists," Cisco Press.</a></div>
+        <div class="reference">[2] Cisco Systems, <a href="https://www.cisco.com/c/en/us/td/docs/routers/access/800/860/software/configuration/guide/routconf.html">"Basic Routing Configuration," Cisco Documentation, 2023.</a></div>
+        <div class="reference">[3] J. Postel, <a href="https://tools.ietf.org/html/rfc793">"Transmission Control Protocol," RFC 793, September 1981.</a></div>
+        <div class="reference">[4] L. Peterson, B. Davie, <a href="https://www.elsevier.com/books/computer-networks/peterson/978-0-12-385059-1">"Computer Networks: A Systems Approach," Morgan Kaufmann, 2011.</a></div>
+    </div>
+</section>

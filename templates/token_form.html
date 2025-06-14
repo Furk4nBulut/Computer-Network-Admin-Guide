@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Access Token Entry for CSE 3132 Computer Networks Project">
+       <link rel="icon" type="image/png" href="https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Ficons.iconarchive.com%2Ficons%2Fblackvariant%2Fbutton-ui-system-apps%2F1024%2FNetwork-icon.png&f=1&nofb=1&ipt=8ba3275985d6b0cdf90d5b064f0c9603fe8d867edd48b34a3fac4465c66e1e29" sizes="32x32">
+    <link rel="apple-touch-icon" href="https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Ficons.iconarchive.com%2Ficons%2Fblackvariant%2Fbutton-ui-system-apps%2F1024%2FNetwork-icon.png&f=1&nofb=1&ipt=8ba3275985d6b0cdf90d5b064f0c9603fe8d867edd48b34a3fac4465c66e1e29">
+    <title>Computer Networks - Admin Guide</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #00629B; /* IEEE Blue */
+            --secondary-color: #003B5C; /* Darker IEEE Blue */
+            --accent-color: #A6192E; /* IEEE Garnet */
+            --light-color: #FFFFFF;
+            --text-color: #222222;
+            --border-color: #E0E0E0;
+            --shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
+            --line-height: 1.6;
+        }
+
+        :root.dark-mode {
+            --primary-color: #4D8FBE;
+            --secondary-color: #2A5A7A;
+            --accent-color: #C4455A;
+            --light-color: #121212;
+            --text-color: #E0E0E0;
+            --border-color: #333333;
+        }
+
+        body {
+            font-family: 'Times New Roman', Times, serif;
+            font-size: 11pt;
+            line-height: var(--line-height);
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+            background-color: var(--light-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .form-container {
+            background: var(--light-color);
+            padding: 2rem;
+            border-radius: 5px;
+            box-shadow: var(--shadow);
+            text-align: center;
+            max-width: 500px;
+            width: 90%;
+            margin: 1rem;
+            position: relative;
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .form-header {
+            background: var(--primary-color);
+            color: white;
+            padding: 1rem;
+            margin: -2rem -2rem 2rem;
+            border-radius: 5px 5px 0 0;
+            border-bottom: 4px solid var(--accent-color);
+        }
+
+        .form-header h2 {
+            margin: 0;
+            font-size: 1.4rem;
+            font-weight: bold;
+        }
+
+        .project-info {
+            font-size: 0.9rem;
+            margin-bottom: 1.5rem;
+            text-align: left;
+            background: var(--border-color);
+            padding: 1rem;
+            border-radius: 3px;
+        }
+
+        .project-info p {
+            margin: 0.5rem 0;
+        }
+
+        .project-info strong {
+            color: var(--primary-color);
+        }
+
+        .project-info a {
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+
+        .project-info a:hover {
+            color: var(--accent-color);
+        }
+
+        .error {
+            color: var(--accent-color);
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .error i {
+            font-size: 1rem;
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        label {
+            font-weight: bold;
+            font-size: 0.9rem;
+            text-align: left;
+            color: var(--primary-color);
+        }
+
+        input[type="text"] {
+            padding: 0.75rem;
+            width: 100%;
+            border: 1px solid var(--border-color);
+            border-radius: 3px;
+            font-size: 0.9rem;
+            box-sizing: border-box;
+            transition: var(--transition);
+        }
+
+        input[type="text"]:focus {
+            border-color: var(--primary-color);
+            outline: none;
+            box-shadow: 0 0 5px rgba(0, 98, 155, 0.3);
+        }
+
+        button {
+            padding: 0.75rem;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: var(--transition);
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        button:hover {
+            background: var(--accent-color);
+        }
+
+        button:disabled {
+            background: var(--border-color);
+            cursor: not-allowed;
+        }
+
+        button .spinner {
+            display: none;
+            width: 1rem;
+            height: 1rem;
+            border: 2px solid white;
+            border-top: 2px solid transparent;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        button.loading .spinner {
+            display: inline-block;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .dark-mode-toggle {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 0.5rem;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: var(--transition);
+        }
+
+        .dark-mode-toggle:hover {
+            background: var(--accent-color);
+        }
+
+        @media (max-width: 600px) {
+            .form-container {
+                padding: 1.5rem;
+                margin: 0.5rem;
+            }
+
+            .form-header {
+                margin: -1.5rem -1.5rem 1.5rem;
+            }
+
+            .form-header h2 {
+                font-size: 1.2rem;
+            }
+        }
+
+        input:focus, button:focus, .dark-mode-toggle:focus {
+            outline: 2px solid var(--accent-color);
+            outline-offset: 2px;
+        }
+
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            border: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="form-container">
+        <div class="form-header">
+            <h2>Access Computer Networks Project</h2>
+        </div>
+        <button class="dark-mode-toggle" onclick="toggleDarkMode()" aria-label="Toggle dark mode">
+            <i class="fas fa-moon"></i>
+        </button>
+        <div class="project-info">
+            <p>
+                This is the <strong>CSE 3132 Computer Networks Design Project</strong> for
+                <strong>Manisa Celal Bayar University</strong>, developed by <strong>Furkan Bulut</strong>
+                under the supervision of <strong>Prof. Dr. Muhammet Gökhan Erdem</strong>,
+                Head of the Department of Computer Science.
+            </p>
+            <p>
+                The project explores 10 current networking problems across the OSI model, with solutions
+                validated using Cisco Packet Tracer simulations, compiled into an Admin Guide Tutorial.
+            </p>
+            <p>
+                <strong>Access Requirement:</strong> A valid access token is required to view the content.
+                Please contact <a href="mailto:furkanbtng@gmail.com">Furkan Bulut</a> to obtain a token.
+            </p>
+            <p style="font-style: italic;">
+                <strong>Proje Hakkında (Türkçe):</strong> Bu proje, Manisa Celal Bayar Üniversitesi
+                Bilgisayar Mühendisliği Bölümü’nde CSE 3132 Network Dersi’nin final ödevidir. Furkan Bulut
+                tarafından, Prof. Dr. Muhammet Gökhan Erdem’in danışmanlığında hazırlanmıştır. OSI modelinin
+                7 katmanında 10 güncel ağ problemi ve çözümleri Cisco Packet Tracer ile sunulmuştur.
+            </p>
+        </div>
+        {% if error %}
+            <p class="error"><i class="fas fa-exclamation-circle"></i>{{ error }}</p>
+        {% endif %}
+        <form id="token-form" method="GET" action="{% url 'computer_networks' %}">
+            <label for="access_token">Access Token</label>
+            <input type="text" id="access_token" name="access_token" placeholder="Enter your access token" required aria-describedby="token-error">
+            <button type="submit" id="submit-btn">
+                <span>Submit</span>
+                <span class="spinner"></span>
+            </button>
+        </form>
+    </div>
+
+    <script>
+        function toggleDarkMode() {
+            try {
+                document.documentElement.classList.toggle('dark-mode');
+                const icon = document.querySelector('.dark-mode-toggle i');
+                if (document.documentElement.classList.contains('dark-mode')) {
+                    icon.classList.replace('fa-moon', 'fa-sun');
+                } else {
+                    icon.classList.replace('fa-sun', 'fa-moon');
+                }
+                localStorage.setItem('darkMode', document.documentElement.classList.contains('dark-mode'));
+            } catch (error) {
+                console.error('Error in toggleDarkMode:', error);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            try {
+                if (localStorage.getItem('darkMode') === 'true') {
+                    document.documentElement.classList.add('dark-mode');
+                    const icon = document.querySelector('.dark-mode-toggle i');
+                    icon.classList.replace('fa-moon', 'fa-sun');
+                }
+            } catch (error) {
+                console.error('Error in DOMContentLoaded:', error);
+            }
+        });
+
+        const form = document.getElementById('token-form');
+        const submitBtn = document.getElementById('submit-btn');
+        form.addEventListener('submit', (e) => {
+            const tokenInput = document.getElementById('access_token');
+            if (!tokenInput.value.trim()) {
+                e.preventDefault();
+                tokenInput.setAttribute('aria-invalid', 'true');
+                tokenInput.focus();
+                return;
+            }
+            submitBtn.classList.add('loading');
+            submitBtn.disabled = true;
+        });
+    </script>
+</body>
+</html>

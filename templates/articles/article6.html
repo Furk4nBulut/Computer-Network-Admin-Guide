@@ -1,0 +1,252 @@
+{%  load static %}
+
+<section id="article6" class="article-section">
+    <div id="resources" class="resources-box">
+    <h2 class="resources-title">Resources</h2>
+    <div class="resource-item">
+        <img src="https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Ficon-library.com%2Fimages%2Ffile-icon%2Ffile-icon-28.jpg&f=1&nofb=1&ipt=c32f79da585079a968a15d585a2055db6b486f9743393e20862e5d9634c9944c" alt="File Icon" class="file-icon" />
+        <div class="resource-details">
+            <span>Cisco Packet Tracer</span>
+            <a href="{%  static 'Cisco-Packet-Tracer/Article6/Camera_ACL.pkt' %}" target="_blank" class="download-btn">Download</a>
+        </div>
+    </div>
+</div>
+
+
+        <h1 class="article-title">Mastering Layer 3 Security with Subnet Segmentation and Access Control Lists</h1>
+        <div class="article-authors">
+            By <strong>Furkan Bulut, 210316011@ogr.cbu.edu.tr</strong><br/>
+            Department of Computer Engineering, Manisa Celal Bayar University
+        </div>
+
+        <div class="article-abstract">
+            <div class="abstract-title">Abstract</div>
+            <p class="no-indent">
+                This comprehensive admin guide tackles a critical Layer 3 security vulnerability in corporate networks where unauthorized access to sensitive resources, such as security camera feeds, occurs due to inadequate subnet segmentation and traffic management. By employing advanced Layer 3 techniques—including subnetting, IP routing, and Access Control Lists (ACLs)—this guide provides a step-by-step approach to segment the network into secure zones and enforce granular access policies. Supported by a detailed Cisco Packet Tracer simulation, it covers problem identification, configuration, troubleshooting, verification, and long-term security strategies, offering network administrators a robust framework to enhance network integrity and compliance.
+            </p>
+        </div>
+
+        <div class="section-title" id="introduction">I. INTRODUCTION</div>
+        <p>
+            In the realm of network administration, securing data and resources at Layer 3 of the OSI model—the network layer—is essential for managing IP-based communication and routing between different network segments. A prevalent issue in many organizations, including the fictional XYZ Technology firm, is the lack of proper Layer 3 segmentation, where all devices operate within a single broadcast domain. This configuration allows unauthorized access, such as management personnel accessing security camera feeds, leading to privacy breaches, potential data leaks, and violations of corporate security policies.
+        </p>
+        <p>
+            This guide addresses this Layer 3 challenge by introducing subnet segmentation to divide the network into isolated zones, leveraging IP routing for inter-subnet communication, and implementing Access Control Lists (ACLs) to enforce access restrictions. Through a detailed Cisco Packet Tracer simulation, administrators will learn to diagnose the issue, configure the solution, troubleshoot potential problems, verify the outcome, and adopt preventive measures. This holistic approach ensures a deep understanding of Layer 3 security principles and their practical application.
+        </p>
+
+        <div class="section-title" id="problem-description">II. PROBLEM DESCRIPTION AND NETWORK SETUP</div>
+        <h3>A. Understanding the Layer 3 Security Vulnerability</h3>
+        <p>
+            Initially, the network operates as a flat Layer 2 domain (e.g., 192.168.1.0/24), relying on switches to handle all traffic. This setup lacks Layer 3 boundaries, enabling unrestricted communication between all devices—Management PCs, Personnel PCs, and Cameras. The specific security vulnerability includes:
+        </p>
+        <ul>
+            <li><strong>Unauthorized Access Risk:</strong> Management users can ping and potentially access camera devices, compromising sensitive video feeds.</li>
+            <li><strong>Data Privacy Concerns:</strong> Exposure of camera data to unauthorized personnel violates privacy regulations.</li>
+            <li><strong>Scalability and Management Challenges:</strong> A single broadcast domain increases broadcast traffic and complicates access control.</li>
+            <li><strong>Security Exploit Potential:</strong> Malicious actors within the Management subnet could exploit camera vulnerabilities.</li>
+        </ul>
+        <p>
+            This Layer 3 issue stems from the absence of IP-based segmentation and routing policies, necessitating a redesign to enforce security at the network layer.
+        </p>
+
+        <h3>B. Detailed Network Topology and Subnet Design</h3>
+        <p>
+            To mitigate this vulnerability, the network is restructured into three distinct Layer 3 subnets, each managed by a router to control inter-subnet traffic:
+        </p>
+        <ul>
+            <li><strong>Management Subnet (192.168.10.0/26):</strong> Supports up to 62 hosts, designated for management personnel (e.g., PC0 with IP 192.168.10.10, PC1 with 192.168.10.20). Gateway: 192.168.10.1.</li>
+            <figure>
+                <img src="{% static 'article_images/article6/management_subnet.png' %}" alt="Management Subnet Configuration" />
+                <figcaption><strong>Figure 1:</strong> Configuration screenshot of the Management subnet (192.168.10.0/26) on PC0, showing IP 192.168.10.10 and gateway 192.168.10.1.</figcaption>
+            </figure>
+            <li><strong>Personnel Subnet (192.168.10.64/26):</strong> Supports up to 62 hosts, allocated to operational staff (e.g., PC2 with 192.168.10.70, PC3 with 192.168.10.80). Gateway: 192.168.10.65.</li>
+            <figure>
+                <img src="{% static 'article_images/article6/personel_subnet.png' %}" alt="Personnel Subnet Configuration" />
+                <figcaption><strong>Figure 2:</strong> Configuration screenshot of the Personnel subnet (192.168.10.64/26) on PC2, showing IP 192.168.10.70 and gateway 192.168.10.65.</figcaption>
+            </figure>
+            <li><strong>Cameras Subnet (192.168.20.0/27):</strong> Supports up to 30 hosts, reserved for security cameras (e.g., Cam1 with 192.168.20.10, Cam2 with 192.168.20.20). Gateway: 192.168.20.1.</li>
+            <figure>
+                <img src="{% static 'article_images/article6/cameras_subnet.png' %}" alt="Cameras Subnet Configuration" />
+                <figcaption><strong>Figure 3:</strong> Configuration screenshot of the Cameras subnet (192.168.20.0/27) on Cam1, showing IP 192.168.20.10 and gateway 192.168.20.1.</figcaption>
+            </figure>
+        </ul>
+        <p>
+            The network topology comprises:
+        </p>
+        <ul>
+            <li><strong>Router R1:</strong> A Layer 3 device with three interfaces for routing between subnets.</li>
+            <li><strong>Three Switches:</strong> Switch1 (Management), Switch2 (Personnel), and Switch3 (Cameras), each connected to the router.</li>
+            <li><strong>Connections:</strong> Switch1 to Router Fa0/0, Switch2 to Fa0/1, Switch3 to Fa1/0.</li>
+        </ul>
+        <figure>
+            <img src="{% static 'article_images/article6/camera_personel_management_netwoork.png' %}" alt="Network Topology with Segmented Subnets" />
+            <figcaption><strong>Figure 4:</strong> Network topology diagram illustrating the segmented subnets (Management, Personnel, Cameras) connected via Router R1, with switch-to-router links.</figcaption>
+        </figure>
+
+        <h3>C. Initial Configuration and Setup Process</h3>
+        <p>
+            Configure the router interfaces to establish Layer 3 routing:
+        </p>
+        <pre>
+Router> enable
+Router# configure terminal
+Router(config)# interface fa0/0
+Router(config-if)# ip address 192.168.10.1 255.255.255.192
+Router(config-if)# no shutdown
+Router(config-if)# exit
+Router(config)# interface fa0/1
+Router(config-if)# ip address 192.168.10.65 255.255.255.192
+Router(config-if)# no shutdown
+Router(config-if)# exit
+Router(config)# interface fa1/0
+Router(config-if)# ip address 192.168.20.1 255.255.255.224
+Router(config-if)# no shutdown
+Router(config-if)# exit
+        </pre>
+        <p>
+            Assign static IP addresses to PCs and cameras as shown in Figures 1-3, ensuring each device points to its respective gateway. Verify connectivity using <code>ping</code> to confirm basic routing between subnets.
+        </p>
+
+        <div class="section-title" id="diagnosis">III. DIAGNOSING THE LAYER 3 ACCESS ISSUE</div>
+        <h3>A. Conducting Initial Connectivity Tests</h3>
+        <p>
+            To identify the Layer 3 security flaw, perform connectivity tests without access controls:
+        </p>
+        <ul>
+            <li><strong>Management to Cameras:</strong> From PC0 (192.168.10.10), ping Cam1 (192.168.20.10). A successful response indicates unauthorized access.</li>
+            <li><strong>Personnel to Cameras:</strong> From PC2 (192.168.10.70), ping Cam1 (192.168.20.10). A successful response is expected and desired.</li>
+        </ul>
+        <p>
+            The ability of Management to reach Cameras via Layer 3 routing confirms the need for access restrictions.
+        </p>
+
+        <h3>B. Analyzing Layer 3 Security Implications</h3>
+        <p>
+            The Layer 3 environment enables routing between subnets, but without access controls, it poses significant risks:
+        </p>
+        <ul>
+            <li><strong>Privacy Breach:</strong> Management users can view or record camera feeds, violating privacy policies.</li>
+            <li><strong>Security Threat:</strong> Unauthorized access could allow configuration changes or exploitation of camera firmware vulnerabilities.</li>
+            <li><strong>Policy Non-Compliance:</strong> Contravenes organizational security guidelines restricting camera access to Personnel only.</li>
+            <li><strong>Troubleshooting Clue:</strong> Use <code>show ip route</code> on the router to verify all subnets are in the routing table, confirming routability as the root cause.</li>
+        </ul>
+        <p>
+            This diagnosis underscores the necessity of implementing Layer 3 access control mechanisms.
+        </p>
+
+        <div class="section-title" id="resolution">IV. RESOLVING THE LAYER 3 ISSUE WITH ACCESS CONTROL LISTS (ACLs)</div>
+        <h3>A. Fundamentals of Layer 3 ACLs</h3>
+        <p>
+            Access Control Lists (ACLs) are Layer 3 tools that filter IP traffic based on source and destination IP addresses, protocols, and ports. In this scenario, an ACL will deny traffic from the Management subnet (192.168.10.0/26) to the Cameras subnet (192.168.20.0/27) while permitting all other traffic to maintain network functionality. ACLs are applied on router interfaces to control inbound or outbound traffic, offering a flexible and efficient security solution.
+        </p>
+
+        <h3>B. Step-by-Step ACL Configuration</h3>
+        <p>
+            Configure the ACL on the router’s Management interface (Fa0/0) to filter inbound traffic:
+        </p>
+        <pre>
+Router(config)# access-list 100 deny ip 192.168.10.0 0.0.0.63 192.168.20.0 0.0.0.31
+Router(config)# access-list 100 permit ip any any
+Router(config)# interface fa0/0
+Router(config-if)# ip access-group 100 in
+Router(config-if)# exit
+        </pre>
+        <p>
+            Detailed Explanation:
+        </p>
+        <ul>
+            <li><code>access-list 100 deny ip 192.168.10.0 0.0.0.63 192.168.20.0 0.0.0.31</code>: Denies traffic from the Management subnet (192.168.10.0 to 192.168.10.63) to the Cameras subnet (192.168.20.0 to 192.168.20.31). The wildcard mask 0.0.0.63 specifies the /26 subnet, and 0.0.0.31 specifies the /27 subnet.</li>
+            <li><code>access-list 100 permit ip any any</code>: Allows all other traffic to prevent network disruption.</li>
+            <li><code>ip access-group 100 in</code>: Applies the ACL to the Fa0/0 interface in the inbound direction, filtering traffic entering from the Management subnet before routing decisions are made.</li>
+        </ul>
+        <p>
+            <strong>Best Practice:</strong> Always test the ACL incrementally (e.g., apply and test with a single deny rule first) to avoid locking out critical services. Use <code>show access-lists</code> to verify the ACL is active and <code>show running-config</code> to confirm interface application.
+        </p>
+
+        <h3>C. Troubleshooting Common ACL Issues</h3>
+        <p>
+            If the ACL does not work as expected:
+        </p>
+        <ul>
+            <li><strong>Check Direction:</strong> Ensure the ACL is applied inbound on Fa0/0, not outbound, as inbound filtering affects traffic before routing.</li>
+            <li><strong>Verify Wildcard Masks:</strong> Incorrect masks (e.g., 0.0.0.255 instead of 0.0.0.63) can block or allow unintended traffic.</li>
+            <li><strong>Clear Counters:</strong> Use <code>clear access-list counters</code> and retest to ensure fresh statistics.</li>
+            <li><strong>Log Traffic:</strong> Add <code>log</code> to the deny statement (e.g., <code>deny ip ... log</code>) to monitor blocked packets via <code>show logging</code>.</li>
+        </ul>
+
+        <div class="section-title" id="verification">V. VERIFYING THE LAYER 3 SOLUTION</div>
+        <h3>A. Comprehensive Testing Post-ACL Implementation</h3>
+        <p>
+            Validate the ACL’s effectiveness with a series of connectivity tests:
+        </p>
+        <ul>
+            <li><strong>Management to Cameras (Denied Access):</strong> From PC0 (192.168.10.10), ping Cam1 (192.168.20.10). Expected result: Failure.</li>
+            <figure>
+                <img src="{% static 'article_images/article6/manager_pc_cannot_ping.png' %}" alt="Management PC Cannot Ping Camera" />
+                <figcaption><strong>Figure 5:</strong> Screenshot showing PC0’s failed ping attempt to Cam1, confirming the ACL blocks access.</figcaption>
+            </figure>
+            <figure>
+                <img src="{% static 'article_images/article6/solution_accessdenied_ping.png' %}" alt="Access Denied Ping Result" />
+                <figcaption><strong>Figure 6:</strong> Ping result displaying "Destination host unreachable" from PC0 to Cam1, verifying ACL enforcement.</figcaption>
+            </figure>
+            <li><strong>Personnel to Cameras (Allowed Access):</strong> From PC2 (192.168.10.70), ping Cam1 (192.168.20.10). Expected result: Success.</li>
+            <figure>
+                <img src="{% static 'article_images/article6/personel_pc_can_ping.png' %}" alt="Personnel PC Can Ping Camera" />
+                <figcaption><strong>Figure 7:</strong> Screenshot showing PC2’s successful ping to Cam1, validating permitted access.</figcaption>
+            </figure>
+            <li><strong>Internal Subnet Tests:</strong> Ensure PC0 can ping PC1 (192.168.10.20) and PC2 can ping PC3 (192.168.10.80)—both should succeed.</li>
+            <li><strong>Internet Simulation:</strong> Ping a simulated internet address (e.g., 8.8.8.8 via a cloud device)—all subnets should succeed if routing is intact.</li>
+        </ul>
+        <p>
+            These tests confirm the ACL selectively restricts Management-to-Cameras traffic while preserving intended connectivity, demonstrating robust Layer 3 control.
+        </p>
+
+        <h3>B. Hands-On Simulation with Cisco Packet Tracer</h3>
+        <p>
+            Engage with the practical implementation using the simulation file: <a href="file://./simulations/subnet_access_control.pkt">Subnet Access Control Simulation (Cisco Packet Tracer)</a>. Follow these detailed steps:
+        </p>
+        <ol>
+            <li><strong>Open the Simulation:</strong> Launch the file in Cisco Packet Tracer (version 8.2 or later recommended).</li>
+            <li><strong>Initial Testing:</strong> Verify that PC0 can ping Cam1 without ACLs, confirming the initial vulnerability.</li>
+            <li><strong>ACL Configuration:</strong> Access Router R1’s CLI, enter the configuration mode, and apply the ACL as shown in Section IV.B.</li>
+            <li><strong>Verification Tests:</strong> Repeat the ping tests from PC0 and PC2 to Cam1, comparing results with Figures 5-7.</li>
+            <li><strong>Advanced Exploration:</strong> Use the simulation’s packet tracer tool to visualize traffic flow and ACL effects, enhancing understanding of Layer 3 filtering.</li>
+        </ol>
+        <p>
+            This simulation provides a hands-on learning experience, reinforcing Layer 3 security concepts.
+        </p>
+
+        <div class="section-title" id="prevention">VI. PREVENTING FUTURE LAYER 3 SECURITY ISSUES</div>
+        <h3>A. Proactive Security Strategies</h3>
+        <p>
+            To safeguard against future Layer 3 vulnerabilities:
+        </p>
+        <ul>
+            <li><strong>Regular Policy Audits:</strong> Conduct quarterly reviews of ACL rules and subnet assignments to adapt to changing security needs.</li>
+            <li><strong>Dynamic Routing Protocols:</strong> Implement OSPF or EIGRP in larger networks to optimize routing and handle failover, using commands like <code>router ospf 1</code> and <code>network 192.168.10.0 0.0.0.63 area 0</code>.</li>
+            <li><strong>Firewall Deployment:</strong> Integrate a stateful firewall (e.g., Cisco ASA) for deep packet inspection and additional filtering beyond ACLs.</li>
+            <li><strong>Network Monitoring Tools:</strong> Deploy SolarWinds, Wireshark, or Cisco’s NetFlow to detect and log unauthorized access attempts, with alerts for suspicious traffic patterns.</li>
+            <li><strong>Redundancy Planning:</strong> Configure backup routers or VRRP (Virtual Router Redundancy Protocol) to ensure routing continuity, using <code>standby 1 ip 192.168.10.1</code>.</li>
+        </ul>
+
+        <h3>B. Documentation and Training</h3>
+        <p>
+            Maintain detailed network diagrams and ACL documentation. Train staff on Layer 3 security principles, emphasizing the importance of subnet isolation and access policies to prevent misconfigurations.
+        </p>
+
+        <div class="section-title" id="conclusion">VII. CONCLUSION</div>
+        <p>
+            This guide comprehensively addresses a critical Layer 3 security challenge by segmenting the network into Management (Figure 1), Personnel (Figure 2), and Cameras (Figure 3) subnets, and implementing an ACL to block unauthorized access from Management to Cameras (Figures 5 and 6) while permitting Personnel access (Figure 7). The step-by-step process—diagnosis, configuration, troubleshooting, and verification—demonstrates the power of Layer 3 routing and access control in securing modern networks. Supported by a Cisco Packet Tracer simulation, this guide equips administrators with the knowledge and tools to design, implement, and maintain secure network architectures, ensuring compliance with organizational security policies and protecting sensitive resources.
+        </p>
+
+        <div class="section-title" id="keywords">Keywords</div>
+        <p class="no-indent"><em>Layer 3, Subnetting, ACL, IP Routing, Network Security, Cisco Packet Tracer, Access Control, Troubleshooting</em></p>
+
+        <div class="references" id="references">
+            <div class="references-title">REFERENCES</div>
+            <div class="reference">[1] Cisco Systems, <a href="https://www.cisco.com/c/en/us/support/docs/ip/access-lists/26448-ACLsamples.html">"Configuring IP Access Lists," Cisco Press.</a></div>
+            <div class="reference">[2] Cisco Systems, <a href="https://www.cisco.com/c/en/us/td/docs/routers/access/800/860/software/configuration/guide/routconf.html">"Basic Routing Configuration," Cisco Documentation, 2023.</a></div>
+            <div class="reference">[3] L. Peterson, B. Davie, <a href="https://www.elsevier.com/books/computer-networks/peterson/978-0-12-385059-1">"Computer Networks: A Systems Approach," Morgan Kaufmann, 2011.</a></div>
+            <div class="reference">[4] Cisco Systems, <a href="https://www.cisco.com/c/en/us/support/docs/ip/routing-information-protocol-rip/13769-5.html">"Configuring OSPF," Cisco Documentation, 2023.</a></div>
+        </div>
+    </section>

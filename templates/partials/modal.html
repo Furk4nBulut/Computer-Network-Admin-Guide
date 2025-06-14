@@ -1,0 +1,303 @@
+<style>
+    /* Modal Styles */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1003;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-content {
+    background: var(--light-color);
+    padding: 1.5rem;
+    border-radius: 5px;
+    max-width: 500px;
+    width: 90%;
+    box-shadow: var(--shadow);
+    position: relative;
+}
+
+:root.dark-mode .modal-content {
+    background: #1E1E1E;
+}
+
+.modal-close {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: var(--text-color);
+    transition: var(--transition);
+}
+
+.modal-close:hover {
+    color: var(--accent-color);
+}
+
+.modal-title {
+    font-size: 1.4rem;
+    color: var(--primary-color);
+    margin-bottom: 1rem;
+    text-align: center;
+}
+
+.modal-description {
+    font-size: 0.9rem;
+    margin-bottom: 1.5rem;
+    text-align: center;
+}
+
+.modal-section {
+    margin-bottom: 1.5rem;
+}
+
+.modal-section h3 {
+    font-size: 1.1rem;
+    color: var(--primary-color);
+    margin-bottom: 0.5rem;
+}
+
+.modal-options {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.modal-options label {
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.modal-options input[type="radio"] {
+    accent-color: var(--primary-color);
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+}
+
+.modal-button {
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: var(--transition);
+}
+
+.modal-button:hover {
+    background: var(--accent-color);
+}
+
+.modal-button-secondary {
+    background: var(--border-color);
+    color: var(--text-color);
+}
+
+.modal-button-secondary:hover {
+    background: var(--accent-color);
+    color: white;
+}
+
+/* Ensure modal is accessible */
+.modal-close:focus,
+.modal-button:focus,
+.modal-options input:focus {
+    outline: 2px solid var(--accent-color);
+    outline-offset: 2px;
+}
+</style>
+    <!-- Preferences Modal -->
+    <div id="preferences-modal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close" onclick="closeModal()" aria-label="Close modal">×</span>
+            <h2 class="modal-title">Customize Your Experience</h2>
+            <p class="modal-description">
+                For the best reading experience, please select your preferred column layout and theme. You can change these settings anytime using the buttons in the top-right corner.
+              <a href="https://www.furkanbulut.software/en/computer-networks/?access_token=furkanbulut">  For better experience visit online.</a>
+            </p>
+
+            <div class="modal-section">
+                <h3>Column Layout</h3>
+                <div class="modal-options">
+                    <label>
+                        <input type="radio" name="column-layout" value="double" checked>
+                        2 Columns
+                    </label>
+                    <label>
+                        <input type="radio" name="column-layout" value="single">
+                        1 Column
+                    </label>
+                </div>
+            </div>
+
+            <div class="modal-section">
+                <h3>Theme</h3>
+                <div class="modal-options">
+                    <label>
+                        <input type="radio" name="theme" value="light" checked>
+                        Light Theme
+                    </label>
+                    <label>
+                        <input type="radio" name="theme" value="dark">
+                        Dark Theme
+                    </label>
+                </div>
+            </div>
+
+            <div class="modal-actions">
+                <button id="save-preferences" class="modal-button" onclick="savePreferences()">Save Preferences</button>
+                <button id="cancel-preferences" class="modal-button modal-button-secondary" onclick="closeModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+function showPreferencesModal(force = false) {
+    try {
+        const modal = document.getElementById('preferences-modal');
+        if (!modal) return;
+
+        const lastShown = localStorage.getItem('modalShownAt');
+        const now = Date.now();
+
+        // Eğer force değilse ve 10 dakikadan kısa süre geçmişse, modal gösterme
+        if (!force && lastShown && (now - parseInt(lastShown, 10)) < 10 * 60 * 1000) {
+            return;
+        }
+
+        // Geçerli ayarları yükle
+        const currentLayout = localStorage.getItem('columnLayout') || 'double';
+        const currentTheme = localStorage.getItem('darkMode') === 'true' ? 'dark' : 'light';
+
+        document.querySelector(`input[name="column-layout"][value="${currentLayout}"]`).checked = true;
+        document.querySelector(`input[name="theme"][value="${currentTheme}"]`).checked = true;
+
+        // Modal'ı göster
+        modal.style.display = 'flex';
+    } catch (error) {
+        console.error('Error in showPreferencesModal:', error);
+    }
+}
+
+function savePreferences() {
+    try {
+        const columnLayout = document.querySelector('input[name="column-layout"]:checked').value;
+        localStorage.setItem('columnLayout', columnLayout);
+        applyColumnLayout();
+
+        const theme = document.querySelector('input[name="theme"]:checked').value;
+        const isDarkMode = theme === 'dark';
+        document.documentElement.classList.toggle('dark-mode', isDarkMode);
+        localStorage.setItem('darkMode', isDarkMode);
+
+        // Şu anki zamanı kaydet
+        localStorage.setItem('modalShownAt', Date.now().toString());
+
+        // Icon'u güncelle
+        const icon = document.querySelector('.dark-mode-toggle i');
+        if (icon) {
+            icon.classList.replace(isDarkMode ? 'fa-moon' : 'fa-sun', isDarkMode ? 'fa-sun' : 'fa-moon');
+        }
+
+        closeModal();
+    } catch (error) {
+        console.error('Error in savePreferences:', error);
+    }
+}
+
+
+
+        function closeModal() {
+            try {
+                const modal = document.getElementById('preferences-modal');
+                if (modal) modal.style.display = 'none';
+            } catch (error) {
+                console.error('Error in closeModal:', error);
+            }
+        }
+
+
+
+        // Column Layout Functions
+        function toggleColumnLayout() {
+            try {
+                const isSingleColumn = localStorage.getItem('columnLayout') === 'single';
+                const newLayout = isSingleColumn ? 'double' : 'single';
+
+                localStorage.setItem('columnLayout', newLayout);
+                applyColumnLayout();
+            } catch (error) {
+                console.error('Error in toggleColumnLayout:', error);
+            }
+        }
+
+        function applyColumnLayout() {
+            try {
+                const layout = localStorage.getItem('columnLayout') || 'double';
+                const label = document.getElementById('column-layout');
+                if (label) {
+                    label.textContent = layout === 'single' ? '1 Column' : '2 Columns';
+                }
+            } catch (error) {
+                console.error('Error in applyColumnLayout:', error);
+            }
+        }
+
+        // Dark Mode
+        function toggleDarkMode() {
+            try {
+                document.documentElement.classList.toggle('dark-mode');
+                const icon = document.querySelector('.dark-mode-toggle i');
+                if (document.documentElement.classList.contains('dark-mode')) {
+                    icon.classList.replace('fa-moon', 'fa-sun');
+                } else {
+                    icon.classList.replace('fa-sun', 'fa-moon');
+                }
+                localStorage.setItem('darkMode', document.documentElement.classList.contains('dark-mode'));
+            } catch (error) {
+                console.error('Error in toggleDarkMode:', error);
+            }
+        }
+
+        // Event Listeners
+document.addEventListener('DOMContentLoaded', () => {
+    try {
+        // Sadece otomatik açılmasını sağla (force = false)
+        showPreferencesModal(false);
+
+        // Sayfa teması uygula
+        if (localStorage.getItem('darkMode') === 'true') {
+            document.documentElement.classList.add('dark-mode');
+            const icon = document.querySelector('.dark-mode-toggle i');
+            if (icon) icon.classList.replace('fa-moon', 'fa-sun');
+        }
+
+        applyColumnLayout();
+
+        // Modal dışına tıklanırsa kapat
+        const modal = document.getElementById('preferences-modal');
+        if (modal) {
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) closeModal();
+            });
+        }
+    } catch (error) {
+        console.error('Error in DOMContentLoaded:', error);
+    }
+});
+
+    </script>

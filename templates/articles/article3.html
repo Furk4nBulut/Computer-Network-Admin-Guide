@@ -1,0 +1,178 @@
+{% load static %}
+
+<section id="article3" class="article-section">
+    <div id="resources" class="resources-box">
+    <h2 class="resources-title">Resources</h2>
+    <div class="resource-item">
+        <img src="https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Ficon-library.com%2Fimages%2Ffile-icon%2Ffile-icon-28.jpg&f=1&nofb=1&ipt=c32f79da585079a968a15d585a2055db6b486f9743393e20862e5d9634c9944c" alt="File Icon" class="file-icon" />
+        <div class="resource-details">
+            <span>Cisco Packet Tracer</span>
+            <a href="{% static 'Cisco-Packet-Tracer/Article3/Cable-Issues-Network-Connectivity.pkt' %}" target="_blank" class="download-btn">Download</a>
+        </div>
+    </div>
+</div>
+
+    <h1 class="article-title">L1 - Cable Issues in Network Connectivity</h1>
+    <div class="article-authors">
+        By <strong>Furkan Bulut, 210316011@ogr.cbu.edu.tr</strong><br/>
+        Department of Computer Engineering, Manisa Celal Bayar University
+    </div>
+
+    <div class="article-abstract">
+        <div class="abstract-title">Abstract</div>
+        <p class="no-indent">
+            Layer 1 (physical layer) issues, such as incorrect cable types, are a frequent cause of network connectivity failures. This admin guide provides a detailed, step-by-step approach to diagnose and resolve cable-related problems using Cisco Packet Tracer (CPT) simulations. It covers identifying incorrect cabling, selecting the appropriate cable type, and verifying connectivity, ensuring administrators can maintain reliable network operations.
+        </p>
+    </div>
+
+    <div class="section-title" id="introduction">I. INTRODUCTION</div>
+    <p>
+        The physical layer (Layer 1) of the OSI model is foundational for network communication, handling the physical connection between devices via cables and hardware. A common issue at this layer is the use of incorrect cable types, such as a straight-through cable where a crossover cable is required, leading to connectivity failures. This admin guide uses a Cisco Packet Tracer simulation to demonstrate such a scenario, providing practical steps for network administrators to diagnose and resolve these issues effectively.
+    </p>
+    <p>
+        The guide focuses on a network setup with PCs, switches, and a router, where a cabling error between switches prevents communication. Through detailed diagnostics, cable replacement, and verification, administrators can restore connectivity and prevent future issues.
+    </p>
+
+    <div class="section-title" id="problem-description">II. PROBLEM DESCRIPTION AND INITIAL SETUP</div>
+    <h3>A. Network Topology Overview</h3>
+    <p>
+        The network topology includes multiple devices: PCs (PC0, PC1, PC2, PC3, PC4), laptops (Laptop0, Laptop1, Laptop2), switches (Switch0, Switch1, Switch2, Switch3), a router (Router0), and servers (Server0, Server1). These devices are interconnected, but a cabling issue disrupts communication:
+    </p>
+    <figure>
+        <img src="{% static 'article_images/article3/example_network.png' %}" alt="Network Topology with Potential Cable Issues" />
+        <figcaption><strong>Figure 1:</strong> Network topology showing devices connected via switches and a router, with a potential cabling issue between Switch0 and Switch1.</figcaption>
+    </figure>
+    <p>
+        The red dashed lines with triangles indicate a failed connection, likely due to an incorrect cable type between Switch0 and Switch1. This setup will be used to simulate and resolve the issue.
+    </p>
+
+    <h3>B. Initial Connectivity Test: Identifying the Failure</h3>
+    <p>
+        To confirm the connectivity issue, a ping test is performed from PC1 (192.168.14.73) to Laptop-PT (192.168.14.75). The result shows a complete failure:
+    </p>
+    <figure>
+        <img src="{% static 'article_images/article3/lost_ping.png' %}" alt="Failed Ping Due to Incorrect Cable" />
+        <figcaption><strong>Figure 2:</strong> Ping from PC1 (192.168.14.73) to Laptop-PT (192.168.14.75) fails with 100% packet loss, indicating a Layer 1 issue.</figcaption>
+    </figure>
+    <p>
+        The ping output shows "Request timed out" for all four packets, resulting in 100% packet loss. This suggests a physical layer problem, as the packets cannot traverse the network between Switch0 and Switch1. The red dashed lines in the topology (Figure 1) further confirm a cabling issue.
+    </p>
+
+    <div class="section-title" id="diagnosis">III. DIAGNOSING THE LAYER 1 ISSUE</div>
+    <h3>A. Understanding Cable Types: Straight-Through vs. Crossover</h3>
+    <p>
+        In Ethernet networks, two primary cable types are used:
+    </p>
+    <ul>
+        <li><strong>Straight-Through Cable:</strong> Used to connect unlike devices (e.g., a switch to a PC or a router to a switch). The transmit (TX) pins on one end connect to the receive (RX) pins on the other end.</li>
+        <li><strong>Crossover Cable:</strong> Used to connect like devices (e.g., switch to switch, PC to PC). The TX and RX pins are crossed, allowing direct communication between similar devices.</li>
+    </ul>
+    <p>
+        In the current topology, Switch0 and Switch1 are like devices, requiring a crossover cable. However, the failed ping suggests a straight-through cable was used, which does not align the TX and RX pairs correctly, blocking communication.
+    </p>
+
+    <h3>B. Visual Inspection in Cisco Packet Tracer</h3>
+    <p>
+        Using Cisco Packet Tracer, inspect the connection between Switch0 and Switch1. The topology (Figure 1) shows a red dashed line, and the port lights on both switches are off, indicating no link. This confirms a physical layer issue due to incorrect cabling.
+    </p>
+
+    <h3>C. Alternative Diagnostic Tools</h3>
+    <p>
+        In a real-world scenario, additional tools can help diagnose Layer 1 issues:
+    </p>
+    <ul>
+        <li><strong>Cable Tester:</strong> Verify the cable’s wiring and continuity to confirm if it’s a straight-through or crossover cable.</li>
+        <li><strong>Switch Port Status:</strong> Check the switch’s interface status (e.g., using the command <code>show interfaces status</code> on a Cisco switch) to see if the port is down.</li>
+        <li><strong>Physical Inspection:</strong> Ensure the cable is securely connected and undamaged. Damaged or broken cables can also cause connectivity issues, as shown below:</li>
+    </ul>
+    <figure>
+        <img src="https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fwww.adslzone.net%2Fapp%2Fuploads-adslzone.net%2F2022%2F04%2Fcable-roto-715x402.jpg&f=1&nofb=1&ipt=d7b3683ce5ecd8b1f24ca2119ac27babab42df4946fc82a66f1c52d3b751e483" alt="Damaged Network Cable" />
+        <figcaption><strong>Figure 3:</strong> Example of a damaged Ethernet cable, which can cause Layer 1 connectivity issues due to broken or exposed wires.</figcaption>
+    </figure>
+    <figure>
+        <img src="https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fmedia.istockphoto.com%2Fphotos%2Fthe-handsfree-cable-is-broken-picture-id1338040243%3Fk%3D20%26m%3D1338040243%26s%3D612x612%26w%3D0%26h%3Dk6khB_VVANiu5wpQ58yazYtcyO5EA_uhFDfMoQNjsks%3D&f=1&nofb=1&ipt=e5c5fbcd0fff7a442e841d7ab751eb8af5d40ba460cbccf02527e2d7835460d1" alt="Broken Cable Close-Up" />
+        <figcaption><strong>Figure 4:</strong> Close-up of a broken cable, illustrating physical damage that disrupts network communication.</figcaption>
+    </figure>
+    <p>
+        In this simulation, the topology and ping results (Figure 2) are sufficient to identify the cabling error, but physical damage, as shown in Figures 3 and 4, should also be considered in real-world troubleshooting.
+    </p>
+
+    <div class="section-title" id="resolution">IV. RESOLVING THE CABLING ISSUE</div>
+    <h3>A. Selecting the Correct Cable</h3>
+    <p>
+        To fix the issue, replace the straight-through cable between Switch0 and Switch1 with a crossover cable. In Cisco Packet Tracer, this is done by selecting the appropriate cable type from the connections menu:
+    </p>
+    <figure>
+        <img src="{% static 'article_images/article3/pick_true_cable.png' %}" alt="Selecting a Crossover Cable" />
+        <figcaption><strong>Figure 5:</strong> Cisco Packet Tracer interface showing the selection of a crossover cable to replace the straight-through cable.</figcaption>
+    </figure>
+    <p>
+        Disconnect the existing straight-through cable between Switch0 and Switch1, then select the crossover cable (highlighted in Figure 5) and reconnect the switches. This ensures the TX and RX pairs are correctly aligned for switch-to-switch communication.
+    </p>
+
+    <h3>B. Reconnecting Devices</h3>
+    <p>
+        After selecting the crossover cable, reconnect Switch0 and Switch1:
+    </p>
+    <ol>
+        <li>Click on Switch0, select a free port (e.g., FastEthernet0/2).</li>
+        <li>Drag the crossover cable to Switch1 and connect it to a free port (e.g., FastEthernet0/2).</li>
+        <li>Observe the port lights on both switches—they should turn green, indicating an active link.</li>
+    </ol>
+    <p>
+        The topology should now show a solid black line between Switch0 and Switch1, with green triangles indicating an active connection.
+    </p>
+
+    <div class="section-title" id="verification">V. VERIFYING THE SOLUTION</div>
+    <h3>A. Retesting Connectivity with Ping</h3>
+    <p>
+        Perform the ping test again from PC1 (192.168.14.73) to Laptop-PT (192.168.14.75) to verify the fix:
+    </p>
+    <figure>
+        <img src="{% static 'article_images/article3/solved_ping.png' %}" alt="Successful Ping After Correct Cable Use" />
+        <figcaption><strong>Figure 6:</strong> Successful ping from PC1 to Laptop-PT after using a crossover cable, showing 0% packet loss.</figcaption>
+    </figure>
+    <p>
+        The ping now succeeds, with all four packets receiving replies and 0% packet loss. The round-trip times are low (0ms to 16ms, averaging 2ms), confirming restored connectivity between the devices.
+    </p>
+
+    <h3>B. Simulation File for Hands-On Practice</h3>
+    <p>
+        To explore this scenario hands-on, use the provided Cisco Packet Tracer simulation file: <a href="https://drive.google.com/drive/folders/1EFoN5hDjASebKtBARcGnuA_DVlZCKEOY?usp=sharing">Layer 1 Cable Fix Simulation (Cisco Packet Tracer)</a>. Follow these steps:
+    </p>
+    <ol>
+        <li>Open the file in Cisco Packet Tracer (version 8.2 recommended).</li>
+        <li>Start the simulation and observe the initial failure (straight-through cable between Switch0 and Switch1).</li>
+        <li>Replace the cable with a crossover cable as shown in Figure 5.</li>
+        <li>Retest the ping and confirm the successful result (Figure 6).</li>
+    </ol>
+    <p>
+        This simulation allows administrators to practice diagnosing and resolving Layer 1 issues in a controlled environment.
+    </p>
+
+    <div class="section-title" id="prevention">VI. PREVENTING FUTURE LAYER 1 ISSUES</div>
+    <p>
+        To avoid similar problems in the future, consider these best practices:
+    </p>
+    <ul>
+        <li><strong>Cable Labeling:</strong> Label cables as straight-through or crossover to avoid confusion during installation.</li>
+        <li><strong>Documentation:</strong> Maintain a network diagram specifying cable types for each connection.</li>
+        <li><strong>Modern Switches:</strong> Use switches with Auto-MDIX, which automatically adjusts for cable type, reducing the need for crossover cables.</li>
+        <li><strong>Regular Inspections:</strong> Periodically check cables for wear, damage, or loose connections, as damaged cables (Figures 3 and 4) can disrupt connectivity.</li>
+    </ul>
+
+    <div class="section-title" id="conclusion">VII. CONCLUSION</div>
+    <p>
+        Incorrect cabling at Layer 1, such as using a straight-through cable between switches, or physical damage to cables, as shown in Figures 3 and 4, can completely disrupt network communication, as seen in the initial ping failure (Figure 2). By understanding cable types (Section III), selecting the correct crossover cable (Figure 5), and verifying connectivity (Figure 6), administrators can resolve these issues efficiently. The provided CPT simulation enhances hands-on learning, preparing administrators for real-world troubleshooting.
+    </p>
+
+    <div class="section-title" id="keywords">Keywords</div>
+    <p class="no-indent"><em>Layer 1, Cable Mismatch, Straight-Through, Crossover, Cisco Packet Tracer, Network Troubleshooting, Damaged Cable</em></p>
+
+    <div class="references" id="references">
+        <div class="references-title">REFERENCES</div>
+        <div class="reference">[1] Cisco Systems, <a href="https://www.cisco.com/c/en/us/support/docs/lan-switching/ethernet/13780-15.html">"Ethernet Cabling Guidelines," Cisco Press.</a></div>
+        <div class="reference">[2] Cisco Systems, <a href="https://www.cisco.com/c/en/us/td/docs/security/asa/asa91/configuration/general/asa_91_general_config/intro_ether.html">"Ethernet Overview," Cisco Documentation, 2023.</a></div>
+        <div class="reference">[3] L. Peterson, B. Davie, <a href="https://www.elsevier.com/books/computer-networks/peterson/978-0-12-385059-1">"Computer Networks: A Systems Approach," Morgan Kaufmann, 2011.</a></div>
+    </div>
+</section>

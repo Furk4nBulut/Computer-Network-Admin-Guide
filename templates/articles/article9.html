@@ -1,0 +1,266 @@
+{% load static %}
+
+<section id="article9" class="article-section">
+    <div id="resources" class="resources-box">
+    <h2 class="resources-title">Resources</h2>
+    <div class="resource-item">
+        <img src="https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Ficon-library.com%2Fimages%2Ffile-icon%2Ffile-icon-28.jpg&f=1&nofb=1&ipt=c32f79da585079a968a15d585a2055db6b486f9743393e20862e5d9634c9944c" alt="File Icon" class="file-icon" />
+        <div class="resource-details">
+            <span>Wireshark</span>
+            <a href="{%  static 'Wireshark/Article9/Layer6-certificate.pcapng' %}" target="_blank" class="download-btn">Download</a>
+        </div>
+    </div>
+</div>
+
+  <h1 class="article-title">I. Addressing SSL/TLS Certificate Verification Issues at Layer 6: A Simulation-Based Analysis</h1>
+  <div class="article-authors">
+    By <strong>Furkan Amiri, 210316011@goog.com</strong><br/>
+    Department of Computer Engineering, Manisa Celal Bayar Üniversitesi, Manisa, Türkiye
+  </div>
+
+  <div class="article-abstract">
+    <div class="abstract-title">ABSTRACT</div>
+    <p class="no-indent">
+      The SSL/TLS protocol, integral to the Presentation Layer (Layer 6), ensures data confidentiality, integrity, and authentication in network communications. Self-signed certificates disrupt this layer’s authentication function, triggering browser warnings and exposing networks to man-in-the-middle (MitM) attacks. This paper simulates a scenario on Internet Information Services (IIS), using Wireshark to analyze TLS handshake failures. Solutions include deploying trusted CA-signed certificates, enforcing modern TLS protocols (1.2/1.3), implementing HTTP Strict Transport Security (HSTS), and automating certificate management. The results emphasize the critical role of proper certificate verification in securing Layer 6, offering a practical framework for mitigating vulnerabilities.
+    </p>
+  </div>
+
+  <div class="section-title" id="introduction">I. INTRODUCTION</div>
+  <p>
+    The SSL/TLS protocol operates at Layer 6 (Presentation Layer) of the OSI model, where it handles encryption, decryption, and authentication to ensure secure communication. The Presentation Layer translates data between the application and lower layers, ensuring it is presented securely in a standardized format. Certificate verification, a core SSL/TLS function, authenticates servers to prevent unauthorized access, making Layer 6 critical for secure data presentation. Self-signed certificates, lacking trusted Certificate Authority (CA) signatures, cause verification failures, triggering browser warnings (e.g., "NET::ERR_CERT_AUTHORITY_INVALID") and exposing networks to man-in-the-middle (MitM) attacks.
+  </p>
+  <p>
+    These failures at Layer 6 are significant because they undermine the layer’s role in ensuring data authenticity and integrity before it reaches the application layer. In environments like university networks, where sensitive data (e.g., student records) is transmitted, such vulnerabilities can lead to data breaches and eroded user trust. This paper simulates a certificate verification issue on an IIS server, analyzes it using Wireshark, and proposes solutions to restore Layer 6 security. The study contributes a simulation-based framework for understanding and resolving these challenges, with practical guidance for administrators.
+  </p>
+
+  <div class="section-title" id="related_work">II. RELATED WORK</div>
+  <p>
+    Research on SSL/TLS security underscores the importance of certificate verification at Layer 6. Rescorla [2] details TLS 1.3, which enhances authentication and cipher suite negotiation, critical for secure data presentation. Clark and van Oorschot [6] highlight MitM vulnerabilities due to improper certificate validation, particularly with self-signed certificates, which fail to establish trust at the Presentation Layer. Durumeric et al. [7] report that 5–10% of HTTPS sites use untrusted certificates, increasing attack surfaces.
+  </p>
+  <p>
+    MitM attacks exploiting Layer 6 vulnerabilities are well-documented. Kranch and Bonneau [8] show that users often bypass certificate warnings, enabling attackers to intercept encrypted traffic. Solutions like CA-signed certificates and HSTS are proposed, but practical implementation guides are limited. This paper addresses this gap by providing a simulation-based analysis and actionable solutions, contributing to the practical application of SSL/TLS security at Layer 6.
+  </p>
+
+  <div class="section-title" id="problem_definition">III. PROBLEM DEFINITION</div>
+  <p>
+    The Presentation Layer (Layer 6) ensures data is formatted, encrypted, and authenticated for secure presentation to the application layer. SSL/TLS, operating at this layer, uses certificates to verify server identity during the TLS handshake, which includes:
+  </p>
+  <ul>
+    <li><b>Client Hello:</b> Specifies supported TLS versions (e.g., 1.2, 1.3) and cipher suites (e.g., TLS_AES_256_GCM_SHA384).</li>
+    <li><b>Server Hello:</b> Selects a protocol and cipher suite.</li>
+    <li><b>Certificate:</b> Sends the server’s certificate for verification.</li>
+    <li><b>Server Hello Done:</b> Completes the server’s handshake.</li>
+    <li><b>Client Key Exchange:</b> Proceeds with key exchange, but fails if the certificate is untrusted.</li>
+  </ul>
+  <p>
+    Self-signed certificates, generated without a trusted CA, lack a verifiable chain of trust, causing verification failures and browser warnings. This disrupts Layer 6’s authentication function, as clients cannot confirm the server’s legitimacy.
+  </p>
+  <figure>
+    <img src="{% static 'article_images/article9/https_certificate_error.png' %}" alt="Browser Certificate Warning" loading="lazy" />
+    <figcaption><strong>Figure 1:</strong> Browser warning indicating an untrusted self-signed certificate at Layer 6.</figcaption>
+  </figure>
+  <p>
+    <b>Why Layer 6 is Critical:</b> Certificate verification failures at Layer 6 allow attackers to exploit the lack of authentication, presenting forged certificates to intercept data before it is presented to the application layer. This undermines the Presentation Layer’s core functions of ensuring data confidentiality, integrity, and authenticity. Key risks include:
+  </p>
+  <ul>
+    <li><b>Man-in-the-Middle Attacks:</b> Attackers impersonate servers, intercepting sensitive data.</li>
+    <li><b>Data Exposure:</b> Unverified server identity risks compromising credentials or personal data.</li>
+    <li><b>User Trust Erosion:</b> Warnings deter users, reducing system usability.</li>
+  </ul>
+  <p>
+    Table I compares self-signed and CA-signed certificates to highlight their impact on Layer 6 security.
+  </p>
+  <table>
+    <caption><strong>Table I:</strong> Comparison of Self-Signed and CA-Signed Certificates</caption>
+    <tr><th>Feature</th><th>Self-Signed Certificate</th><th>CA-Signed Certificate</th></tr>
+    <tr><td>Trusted Issuer</td><td>No (self-issued)</td><td>Yes (e.g., Let’s Encrypt)</td></tr>
+    <tr><td>Browser Warnings</td><td>Triggers warnings</td><td>No warnings</td></tr>
+    <tr><td>MitM Risk</td><td>High (easy to spoof)</td><td>Low (trusted chain)</td></tr>
+    <tr><td>Layer 6 Impact</td><td>Disrupts authentication</td><td>Ensures secure presentation</td></tr>
+    <tr><td>Cost</td><td>Free</td><td>Free (e.g., Let’s Encrypt) or paid</td></tr>
+  </table>
+
+  <div class="section-title" id="methodology">IV. SIMULATION AND ANALYSIS METHOD</div>
+  <h3>A. Simulation Setup</h3>
+  <p>
+    A test environment was established to simulate a Layer 6 certificate verification issue on an IIS server:
+  </p>
+  <ol>
+    <li>In IIS Manager, a self-signed certificate was created under <b>Server Certificates</b> (friendly name: "TestCert").</li>
+    <li>An HTTPS binding was configured for a test site on port 443, selecting the self-signed certificate.</li>
+    <li>Accessing the site (https://localhost) triggered a browser warning, confirming the Layer 6 issue.</li>
+  </ol>
+  <figure>
+    <img src="{% static 'article_images/article9/server_certificate_selection.png' %}" alt="IIS Certificate Selection" loading="lazy" />
+    <figcaption><strong>Figure 2:</strong> IIS Manager showing the selection of a self-signed certificate for HTTPS binding at Layer 6.</figcaption>
+  </figure>
+
+  <h3>B. Wireshark Analysis</h3>
+  <p>
+    TLS traffic was captured to analyze the handshake at Layer 6:
+  </p>
+  <ol>
+    <li>Wireshark was configured with a filter (<code>tcp.port == 443</code>) to capture HTTPS traffic.</li>
+    <li>The TLS handshake was examined, focusing on Client Hello and Certificate packets.</li>
+    <li>The Certificate packet showed an untrusted issuer (e.g., CN=TestCert), confirming the verification failure.</li>
+  </ol>
+  <figure>
+    <img src="{% static 'article_images/article9/wireshark_clienthello.png' %}" alt="Client Hello Packet" loading="lazy" />
+    <figcaption><strong>Figure 3:</strong> Client Hello packet showing supported TLS versions and cipher suites at Layer 6.</figcaption>
+  </figure>
+  <figure>
+    <img src="{% static 'article_images/article9/certificate_view.png' %}" alt="Certificate Details" loading="lazy" />
+    <figcaption><strong>Figure 4:</strong> Self-signed certificate details, highlighting the untrusted issuer at Layer 6.</figcaption>
+  </figure>
+  <figure>
+    <img src="{% static 'article_images/article9/wireshark_tlc.png' %}" alt="TLS Handshake Capture" loading="lazy" />
+    <figcaption><strong>Figure 5:</strong> TLS handshake packets, showing the problematic certificate exchange at Layer 6.</figcaption>
+  </figure>
+  <p>
+    The analysis confirmed that the self-signed certificate disrupted Layer 6’s authentication, enabling potential MitM attacks.
+  </p>
+
+  <div class="section-title" id="solutions">V. PROPOSED SOLUTIONS</div>
+  <h3>A. Deploy CA-Signed Certificates</h3>
+  <p>
+    To restore Layer 6 authentication, self-signed certificates were replaced with CA-signed certificates:
+  </p>
+  <ol>
+    <li>A Certificate Signing Request (CSR) was generated in IIS Manager (CN=yourdomain.edu).</li>
+    <li>The CSR was submitted to Let’s Encrypt using Certbot:
+      <pre>
+certbot certonly --manual --preferred-challenges dns -d yourdomain.edu
+      </pre>
+    </li>
+    <li>The issued certificate and intermediate CA certificates were installed via <b>Complete Certificate Request</b>.</li>
+    <li>The HTTPS binding was updated, followed by an IIS restart (<code>iisreset</code>).</li>
+  </ol>
+
+  <h3>B. Update TLS Versions and Cipher Suites</h3>
+  <p>
+    To enhance Layer 6 encryption, outdated protocols (SSL, TLS 1.0, 1.1) were disabled, and TLS 1.2/1.3 were enforced:
+  </p>
+<pre><code>
+# PowerShell to disable TLS 1.0 and TLS 1.1 on Server side and configure Cipher Suites
+
+# Disable TLS 1.0 Server
+New-Item -Path 'HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.0\Server' -Force
+New-ItemProperty -Path 'HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.0\Server' -Name 'Enabled' -Value 0 -PropertyType DWORD -Force
+New-ItemProperty -Path 'HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.0\Server' -Name 'DisabledByDefault' -Value 1 -PropertyType DWORD -Force
+
+# Disable TLS 1.1 Server
+New-Item -Path 'HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.1\Server' -Force
+New-ItemProperty -Path 'HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.1\Server' -Name 'Enabled' -Value 0 -PropertyType DWORD -Force
+New-ItemProperty -Path 'HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.1\Server' -Name 'DisabledByDefault' -Value 1 -PropertyType DWORD -Force
+
+# Configure Cipher Suites (comma-separated list, no spaces)
+$CipherSuites = "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"
+
+Set-ItemProperty -Path 'HKLM:\SYSTEM\CurrentControlSet\Control\Cryptography\Configuration\Local\SSL\00010002' -Name 'Functions' -Value $CipherSuites -Force
+</code></pre>
+
+
+  <h3>C. Implement HSTS</h3>
+  <p>
+    HSTS was configured to enforce HTTPS, strengthening Layer 6 security:
+  </p>
+<pre><code>
+&lt;configuration&gt;
+    &lt;system.webServer&gt;
+        &lt;httpProtocol&gt;
+            &lt;customHeaders&gt;
+                &lt;add name="Strict-Transport-Security" value="max-age=31536000; includeSubDomains" /&gt;
+            &lt;/customHeaders&gt;
+        &lt;/httpProtocol&gt;
+    &lt;/system.webServer&gt;
+&lt;/configuration&gt;
+</code></pre>
+
+
+  <h3>D. Certificate Chain Management</h3>
+  <p>
+    The certificate chain was verified to include intermediate CA certificates, ensuring browsers could establish trust to a root CA, critical for Layer 6 authentication.
+  </p>
+
+  <h3>E. Automation and Management</h3>
+  <p>
+    Certificate renewals were automated using Certbot scripts (e.g., <code>certbot renew</code>), and TLS configurations were audited with Qualys SSL Labs to maintain Layer 6 security.
+  </p>
+
+  <h3>F. Verification Steps</h3>
+  <p>
+    The solutions were validated through:
+  </p>
+  <ul>
+    <li><b>Browser Test:</b> Accessing https://yourdomain.edu to confirm no warnings.</li>
+    <li><b>Wireshark Analysis:</b> Verifying the Certificate packet shows a trusted CA issuer.</li>
+    <li><b>SSL Labs Test:</b> Confirming TLS 1.2/1.3 and strong ciphers via <a href="https://www.ssllabs.com/ssltest/">ssllabs.com/ssltest</a>.</li>
+    <li><b>HSTS Check:</b> Verifying the HSTS header in browser developer tools.</li>
+  </ul>
+
+  <div class="section-title" id="flowchart">VI. RESOLUTION FLOWCHART</div>
+  <p>
+    The following flowchart outlines the process for resolving the Layer 6 certificate verification issue:
+  </p>
+  <pre>
+graph TD
+    A[Start: Browser Warning Detected] --> B[Capture TLS Traffic with Wireshark]
+    B --> C[Inspect Certificate Packet]
+    C --> D{Untrusted Issuer?}
+    D -->|Yes| E[Generate CSR in IIS]
+    E --> F[Obtain CA-Signed Certificate]
+    F --> G[Install Certificate and Update Binding]
+    G --> H[Configure TLS 1.2/1.3 and Ciphers]
+    H --> I[Enable HSTS]
+    I --> J[Verify with Browser, Wireshark, SSL Labs]
+    J --> K{No Warnings?}
+    K -->|Yes| L[Solution Complete]
+    K -->|No| M[Review Configuration and Retry]
+    M --> E
+    D -->|No| L
+  </pre>
+
+  <div class="section-title" id="discussion">VII. DISCUSSION</div>
+  <p>
+    <b>Advantages:</b> CA-signed certificates restore Layer 6 authentication, eliminating browser warnings and enhancing user trust. TLS 1.2/1.3 and HSTS strengthen encryption and prevent HTTP fallback, reducing MitM risks. Automation simplifies certificate management, ensuring continuous Layer 6 security.
+  </p>
+  <p>
+    <b>Limitations:</b> Obtaining CA-signed certificates requires domain ownership verification, which can be complex for internal or non-public networks. HSTS implementation must be tested to avoid locking out HTTP access during transitions, particularly in mixed environments.
+  </p>
+  <p>
+    <b>Real-World Challenges:</b> Small organizations may lack expertise for certificate management, though Let’s Encrypt offers a cost-effective solution. Legacy systems may not support TLS 1.3, requiring fallback configurations that balance security and compatibility. User education is critical, as bypassing warnings remains a weak link.
+  </p>
+  <p>
+    <b>Adaptability:</b> The solutions are adaptable to other web servers (e.g., Apache, Nginx) and environments (e.g., enterprise, cloud), with adjustments for CA-specific processes. The simulation framework can be applied to various Layer 6 security scenarios.
+  </p>
+
+  <div class="section-title" id="conclusion">VIII. CONCLUSION</div>
+  <p>
+    Self-signed certificates at Layer 6 cause verification failures, disrupting the Presentation Layer’s authentication and encryption functions, as shown in Figures 1–5. These failures enable MitM attacks, compromising data security and user trust. By deploying CA-signed certificates, enforcing TLS 1.2/1.3, implementing HSTS, and automating management, administrators can secure Layer 6 operations. The simulation and Wireshark analysis provide a practical framework for diagnosing and resolving these issues. Future research should explore automated certificate management for large-scale networks, user behavior regarding certificate warnings, and Layer 6 vulnerabilities in emerging protocols like QUIC.
+  </p>
+  <p>
+    <b>Recommendations:</b>
+  </p>
+  <ul>
+    <li>Use free CA services like Let’s Encrypt for cost-effective certificate management.</li>
+    <li>Implement automated renewal and audit tools to maintain Layer 6 security.</li>
+    <li>Train users to report certificate warnings rather than bypassing them.</li>
+    <li>Explore Layer 6 security enhancements for next-generation protocols.</li>
+  </ul>
+
+  <div class="section-title" id="keywords">IX. KEYWORDS</div>
+  <p class="no-indent"><em>SSL/TLS, Presentation Layer, Layer 6, Self-Signed Certificate, Man-in-the-Middle Attack, CA-Signed Certificate, HSTS, Wireshark, IIS</em></p>
+
+<div class="references" id="references">
+    <div class="references-title">REFERENCES</div>
+    <div class="reference">[1] Microsoft, “How to Set Up SSL on IIS,” <i>Microsoft Learn</i>, 2023. [Online]. Available: <a href="https://learn.microsoft.com/en-us/iis/manage/configuring-security/how-to-set-up-ssl-on-iis" target="_blank" rel="noopener noreferrer">https://learn.microsoft.com/en-us/iis/manage/configuring-security/how-to-set-up-ssl-on-iis</a></div>
+    <div class="reference">[2] E. Rescorla, “The Transport Layer Security (TLS) Protocol Version 1.3,” <i>RFC 8446</i>, Aug. 2018. [Online]. Available: <a href="https://tools.ietf.org/html/rfc8446" target="_blank" rel="noopener noreferrer">https://tools.ietf.org/html/rfc8446</a></div>
+    <div class="reference">[3] Qualys, “SSL Server Test,” <i>SSL Labs</i>, 2023. [Online]. Available: <a href="https://www.ssllabs.com/ssltest/" target="_blank" rel="noopener noreferrer">https://www.ssllabs.com/ssltest/</a></div>
+    <div class="reference">[4] Let’s Encrypt, “Documentation,” 2023. [Online]. Available: <a href="https://letsencrypt.org/docs/" target="_blank" rel="noopener noreferrer">https://letsencrypt.org/docs/</a></div>
+    <div class="reference">[5] Wireshark Foundation, “Wireshark User’s Guide,” 2023. [Online]. Available: <a href="https://www.wireshark.org/docs/" target="_blank" rel="noopener noreferrer">https://www.wireshark.org/docs/</a></div>
+    <div class="reference">[6] J. Clark and P. C. van Oorschot, “SoK: SSL and HTTPS: Revisiting past challenges and evaluating certificate trust model enhancements,” in <i>Proc. IEEE Symp. Secur. Privacy</i>, May 2013, pp. 511–525.</div>
+    <div class="reference">[7] Z. Durumeric et al., “The matter of Heartbleed,” in <i>Proc. Internet Meas. Conf.</i>, 2014, pp. 475–488.</div>
+    <div class="reference">[8] M. Kranch and J. Bonneau, “Upgrading HTTPS in mid-air: An empirical study of strict transport security and key pinning,” in <i>Proc. Netw. Distrib. Syst. Secur. Symp.</i>, 2015.</div>
+</div>
+
+</section>

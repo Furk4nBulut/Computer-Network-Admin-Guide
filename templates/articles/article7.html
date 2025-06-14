@@ -1,0 +1,279 @@
+{% load static %}
+
+<section id="article7" class="article-section">
+    <div id="resources" class="resources-box">
+    <h2 class="resources-title">Resources</h2>
+    <div class="resource-item">
+        <img src="https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Ficon-library.com%2Fimages%2Ffile-icon%2Ffile-icon-28.jpg&f=1&nofb=1&ipt=c32f79da585079a968a15d585a2055db6b486f9743393e20862e5d9634c9944c" alt="File Icon" class="file-icon" />
+        <div class="resource-details">
+            <span>Cisco Packet Tracer</span>
+            <a href="{% static 'Cisco-Packet-Tracer/Article7/SMTP-Server-25.pkt' %}" target="_blank" class="download-btn">Download</a>
+
+        </div>
+    </div>
+</div>
+
+    <h1 class="article-title">L4 - Securing SMTP Services in University Networks</h1>
+    <div class="article-authors">
+               <strong>Furkan Bulut, 210316011@ogr.cbu.edu.tr</strong><br/>
+        Department of Computer Engineering, Manisa Celal Bayar University
+    </div>
+
+    <div class="article-abstract">
+        <div class="abstract-title">Abstract</div>
+        <p class="no-indent">
+            This admin guide addresses a critical security vulnerability in a university network where an open SMTP service (TCP port 25) without authentication allows attackers to send spoofed emails, including from high-profile accounts like the rector’s. This vulnerability, rooted in Layer 4 (transport layer) and impacting Layers 2, 3, and 7, enables phishing, data breaches, and reputational damage. Using Cisco Packet Tracer, this guide provides a detailed methodology for diagnosing the issue, implementing Access Control Lists (ACLs) and SMTP authentication, troubleshooting misconfigurations, and verifying the solution. It offers network administrators a robust framework to secure SMTP services, ensure compliance with university security policies, and prevent future vulnerabilities through advanced protection mechanisms like SPF, DKIM, and DMARC.
+        </p>
+    </div>
+
+    <div class="section-title" id="introduction">1. INTRODUCTION</div>
+    <p>
+        Email communication is a cornerstone of university operations, relying on the Simple Mail Transfer Protocol (SMTP) operating on TCP port 25 at the transport layer (Layer 4) of the OSI model. However, an unsecured SMTP server poses a severe security risk, allowing attackers to exploit open ports to send spoofed emails impersonating trusted users, such as the rector or deans. Such actions can lead to phishing attacks, misinformation, data breaches, and reputational damage. This guide tackles a real-world scenario where an attacker exploits an open SMTP port to send unauthorized emails, emphasizing the critical need for Layer 4 access controls and application-layer authentication.
+    </p>
+    <p>
+        Using Cisco Packet Tracer, this tutorial demonstrates how to identify the vulnerability, configure Access Control Lists (ACLs) and SMTP authentication to restrict access, troubleshoot common issues, and verify the solution. It also analyzes the interplay between Layer 4 and other OSI layers (Layers 2, 3, and 7) and provides proactive strategies to ensure long-term network security.
+    </p>
+
+    <div class="section-title" id="problem-description">2. REAL-WORLD SCENARIO AND PROBLEM DEFINITION</div>
+    <h3>2.1 Problem Overview</h3>
+    <p>
+        In the university’s network, the SMTP server (TCP port 25) lacks authentication and access controls, allowing any device—internal or external—to connect and send emails. This vulnerability enables attackers to use tools like Telnet to issue SMTP commands and send spoofed emails impersonating high-profile users (e.g., <code>rektorluk@universite.edu</code>). The lack of restrictions creates significant risks:
+    </p>
+    <ul>
+        <li><strong>Unauthorized Email Spoofing:</strong> Attackers can send emails impersonating legitimate users, leading to phishing or misinformation campaigns.</li>
+        <li><strong>Reputational Damage:</strong> Spoofed emails from trusted accounts erode institutional credibility.</li>
+        <li><strong>Data Breaches:</strong> Phishing emails can trick users into revealing sensitive information.</li>
+        <li><strong>Policy Violations:</strong> Open SMTP access violates university security policies requiring restricted access to critical services.</li>
+    </ul>
+
+    <h3>2.2 Detailed Risks</h3>
+    <p>
+        The absence of authentication and filtering mechanisms amplifies the threat:
+    </p>
+    <ul>
+        <li><strong>Institutional Authority Misuse:</strong> Spoofed emails from high-profile accounts can manipulate recipients or authorize fraudulent actions.</li>
+        <li><strong>Social Engineering:</strong> Attackers can exploit trust in spoofed emails to extract sensitive data or deploy malware.</li>
+        <li><strong>Compliance Failure:</strong> Unsecured services violate regulatory and institutional security standards.</li>
+    </ul>
+    <figure>
+        <img src="{% static 'article_images/article7/conn_attacker.png' %}" alt="Attacker Connecting to SMTP Server" />
+        <figcaption><strong>Figure 1:</strong> Screenshot of an attacker’s PC (192.168.1.20) connecting to the SMTP server (192.168.1.100) via Telnet on port 25, sending a spoofed email.</figcaption>
+    </figure>
+
+    <div class="section-title" id="osi-analysis">3. OSI MODEL ANALYSIS</div>
+    <p>
+        The vulnerability spans multiple OSI layers, with the primary issue at Layer 4 (transport layer) due to the open TCP port 25. The table below outlines the affected layers and associated issues:
+    </p>
+    <table>
+        <tr><th>OSI Layer</th><th>Problem / Vulnerability</th></tr>
+        <tr><td>Layer 2 (Data Link)</td><td>Flat VLAN allows unrestricted MAC-level communication within the subnet.</td></tr>
+        <tr><td>Layer 3 (Network)</td><td>No IP-based filtering allows any device in the 192.168.1.0/24 subnet to reach the SMTP server.</td></tr>
+        <tr><td>Layer 4 (Transport)</td><td>TCP port 25 is open to all devices, enabling unauthorized TCP connections to the SMTP service.</td></tr>
+        <tr><td>Layer 7 (Application)</td><td>Lack of SMTP authentication (e.g., SMTP-AUTH) allows attackers to exploit SMTP commands (MAIL FROM, RCPT TO) for spoofing.</td></tr>
+    </table>
+    <p>
+        Addressing the issue requires Layer 4 filtering (via ACLs) to restrict port access and Layer 7 enhancements (SMTP authentication) to enforce user validation.
+    </p>
+
+    <div class="section-title" id="topology">4. SIMULATION TOPOLOGY</div>
+    <p>
+        The university network is a flat topology simulated in Cisco Packet Tracer, as shown below:
+    </p>
+    <pre>
+          [Admin PC: 192.168.1.10]
+                  |
+            [Switch: S1] —— [Attacker PC: 192.168.1.20]
+                  |
+               [Router: R1, 192.168.1.1]
+                  |
+         [Mail Server: 192.168.1.100]
+    </pre>
+    <ul>
+        <li><strong>Router (R1):</strong> Interface Fa0/0, IP 192.168.1.1/24, default gateway.</li>
+        <li><strong>Switch (S1):</strong> Connects all devices in VLAN 1 (192.168.1.0/24).</li>
+        <li><strong>Admin PC (PC0):</strong> IP 192.168.1.10, authorized for SMTP access. Gateway: 192.168.1.1.</li>
+        <li><strong>Attacker PC (PC1):</strong> IP 192.168.1.20, unauthorized device. Gateway: 192.168.1.1.</li>
+        <li><strong>SMTP Server (Server0):</strong> IP 192.168.1.100, running SMTP on TCP port 25. Gateway: 192.168.1.1.</li>
+    </ul>
+    <figure>
+        <img src="{% static 'article_images/article7/simple_edu_smtp_network.png' %}" alt="University Network Topology" />
+        <figcaption><strong>Figure 2:</strong> Network topology diagram showing the flat network with Router R1, Switch S1, Admin PC (PC0), Attacker PC (PC1), and SMTP Server (Server0).</figcaption>
+    </figure>
+
+    <div class="section-title" id="implementation">5. STEP-BY-STEP IMPLEMENTATION</div>
+    <h3>5.1 Mail Server Configuration</h3>
+    <p>
+        Configure the SMTP server in Cisco Packet Tracer:
+    </p>
+    <ul>
+        <li><strong>IP Address:</strong> 192.168.1.100, Subnet: 255.255.255.0, Gateway: 192.168.1.1.</li>
+        <li><strong>SMTP Service:</strong> Enable via Config > Services > SMTP, set to ON.</li>
+        <li><strong>Initial State:</strong> Authentication disabled, exposing the vulnerability.</li>
+    </ul>
+
+    <h3>5.2 Admin PC Configuration</h3>
+    <p>
+        Configure the authorized Admin PC:
+    </p>
+    <ul>
+        <li><strong>IP Address:</strong> 192.168.1.10, Subnet: 255.255.255.0, Gateway: 192.168.1.1.</li>
+        <li><strong>Test Access:</strong> Use Telnet to verify legitimate SMTP access:
+            <pre>telnet 192.168.1.100 25</pre>
+            Expected result: Connection opens, allowing email commands.
+        </li>
+    </ul>
+
+    <h3>5.3 Attacker PC Simulation</h3>
+    <p>
+        Simulate an attack to demonstrate the vulnerability:
+    </p>
+    <ul>
+        <li><strong>IP Address:</strong> 192.168.1.20, Subnet: 255.255.255.0, Gateway: 192.168.1.1.</li>
+        <li><strong>Test Attack:</strong> From PC1, execute:
+            <pre>
+telnet 192.168.1.100 25
+HELO example.com
+MAIL FROM:<rektorluk@universite.edu>
+RCPT TO:<ogrenci@universite.edu>
+DATA
+Bu bir test mesajıdır.
+.
+            </pre>
+            Expected result: Email sent successfully, confirming unauthorized access (Figure 1).
+        </li>
+    </ul>
+
+    <h3>5.4 Router ACL Configuration</h3>
+    <p>
+        Implement an extended ACL on Router R1 to restrict SMTP access:
+    </p>
+    <pre>
+Router> enable
+Router# configure terminal
+Router(config)# access-list 110 permit tcp host 192.168.1.10 host 192.168.1.100 eq 25
+Router(config)# access-list 110 deny tcp any host 192.168.1.100 eq 25 log
+Router(config)# access-list 110 permit ip any any
+Router(config)# interface fa0/0
+Router(config-if)# ip access-group 110 in
+Router(config-if)# exit
+Router(config)# end
+Router# copy running-config startup-config
+    </pre>
+    <p><strong>Explanation:</strong></p>
+    <ul>
+        <li><code>permit tcp host 192.168.1.10 host 192.168.1.100 eq 25</code>: Allows Admin PC to access SMTP server on port 25.</li>
+        <li><code>deny tcp any host 192.168.1.100 eq 25 log</code>: Blocks all other SMTP access and logs attempts for monitoring.</li>
+        <li><code>permit ip any any</code>: Ensures other traffic is unaffected.</li>
+        <li><code>ip access-group 110 in</code>: Applies ACL inbound on Fa0/0.</li>
+    </ul>
+
+    <h3>5.5 Enabling SMTP Authentication</h3>
+    <p>
+        Configure SMTP-AUTH on the server to require credentials:
+    </p>
+    <ul>
+        <li><strong>Enable SMTP-AUTH:</strong> In Packet Tracer, simulate by enabling authentication in Config > Services > SMTP (if supported) or note that real-world servers (e.g., Postfix, Exchange) require SMTP-AUTH with TLS.</li>
+        <li><strong>Credentials:</strong> Set username/password for authorized users (e.g., Admin PC).</li>
+        <li><strong>TLS/SSL:</strong> Enable encrypted communication to secure SMTP sessions.</li>
+    </ul>
+
+    <h3>5.6 Troubleshooting ACL and Authentication Issues</h3>
+    <p>
+        Common issues and solutions:
+    </p>
+    <ul>
+        <li><strong>ACL Misconfiguration:</strong> Verify with <code>show access-lists 110</code> and <code>show ip interface fa0/0</code>.</li>
+        <li><strong>Authentication Failure:</strong> Check server logs or ensure correct credentials are used.</li>
+        <li><strong>Logging Denied Traffic:</strong> Use <code>show logging</code> to confirm blocked attempts from PC1.</li>
+        <li><strong>Clear Counters:</strong> Run <code>clear access-list counters</code> to reset hit counts.</li>
+    </ul>
+
+    <div class="section-title" id="security-measures">6. PORT SECURITY AND ADVANCED PROTECTION MECHANISMS</div>
+    <h3>6.1 Port Scanning and Detection</h3>
+    <p>
+        Attackers can identify open ports using tools like Nmap:
+    </p>
+    <pre>nmap -p 25 192.168.1.100</pre>
+    <p>
+        Mitigation: Regularly scan the network to identify open ports and apply ACLs to restrict access.
+    </p>
+
+    <h3>6.2 Advanced SMTP Security</h3>
+    <ul>
+        <li><strong>SPF (Sender Policy Framework):</strong> Define authorized mail servers in DNS to prevent spoofing.</li>
+        <li><strong>DKIM (DomainKeys Identified Mail):</strong> Digitally sign emails to verify authenticity.</li>
+        <li><strong>DMARC (Domain-based Message Authentication):</strong> Enforce SPF/DKIM policies and handle non-compliant emails.</li>
+    </ul>
+
+    <h3>6.3 Network Segmentation</h3>
+    <p>
+        Implement VLANs to isolate the SMTP server and restrict access to specific subnets, reducing the attack surface.
+    </p>
+
+    <div class="section-title" id="verification">7. VERIFICATION AND TESTING</div>
+    <h3>7.1 Testing Post-Implementation</h3>
+    <ul>
+        <li><strong>Admin PC Test:</strong> From PC0 (192.168.1.10):
+            <pre>telnet 192.168.1.100 25</pre>
+            Expected result: Connection opens with authentication prompt.
+        </li>
+        <li><strong>Attacker PC Test:</strong> From PC1 (192.168.1.20):
+            <pre>telnet 192.168.1.100 25</pre>
+            Expected result: Connection refused due to ACL.
+        </li>
+        <li><strong>General Connectivity:</strong> Ping Server0 from both PCs to confirm other services are unaffected.</li>
+    </ul>
+    <p>
+        Verify ACL hit counts with <code>show access-lists 110</code> and check logs with <code>show logging</code>.
+    </p>
+
+    <h3>7.2 Packet Tracer Simulation</h3>
+    <p>
+        Use the simulation file: <a href="https://drive.google.com/drive/folders/1feWwjfv6DXtDuULtjktu0HplKTcY-zqo?usp=sharing">SMTP Security Simulation (Cisco Packet Tracer)</a>.
+    </p>
+    <ol>
+        <li>Load the .pkt file in Cisco Packet Tracer (version 8.2+).</li>
+        <li>Test initial vulnerability (PC1 Telnet to Server0).</li>
+        <li>Apply ACL and SMTP-AUTH configurations.</li>
+        <li>Retest to confirm PC0 access and PC1 denial.</li>
+        <li>Use simulation mode to visualize packet filtering.</li>
+    </ol>
+
+    <div class="section-title" id="prevention">8. PREVENTING FUTURE VULNERABILITIES</div>
+    <h3>8.1 Proactive Measures</h3>
+    <ul>
+        <li><strong>Regular Audits:</strong> Review ACLs and SMTP configurations quarterly.</li>
+        <li><strong>Monitoring:</strong> Use Wireshark or NetFlow to detect unauthorized access attempts.</li>
+        <li><strong>Firewall Integration:</strong> Deploy Cisco ASA for stateful inspection.</li>
+        <li><strong>Patch Management:</strong> Keep SMTP server software updated.</li>
+    </ul>
+
+    <h3>8.2 Documentation and Training</h3>
+    <p>
+        Maintain detailed documentation of ACLs, network diagrams, and configurations. Train administrators on Layer 4/7 security practices and SMTP hardening techniques.
+    </p>
+
+    <div class="section-title" id="conclusion">9. CONCLUSION AND RECOMMENDATIONS</div>
+    <p>
+        This admin guide addresses a critical Layer 4 vulnerability in a university network, where an open SMTP port (TCP 25) without authentication allows email spoofing. By implementing ACLs to restrict access to the Admin PC (192.168.1.10) and enabling SMTP-AUTH, the solution secures email services and prevents unauthorized access from devices like the Attacker PC (192.168.1.20). The guide provides a comprehensive framework—diagnosis, configuration, troubleshooting, and verification—supported by Cisco Packet Tracer simulations. Additional measures like SPF, DKIM, DMARC, and network segmentation ensure long-term security. Administrators are equipped to protect sensitive communications and comply with university policies.
+    </p>
+    <p><strong>Recommendations:</strong></p>
+    <ul>
+        <li>Implement SMTP authentication and TLS/SSL on all mail servers.</li>
+        <li>Regularly audit network configurations and monitor logs.</li>
+        <li>Adopt advanced email security protocols (SPF, DKIM, DMARC).</li>
+        <li>Train staff on identifying phishing and social engineering attacks.</li>
+    </ul>
+
+    <div class="section-title" id="keywords">Keywords</div>
+    <p class="no-indent"><em>Layer 4, SMTP, Access Control Lists, SMTP-AUTH, Network Security, Cisco Packet Tracer, Email Spoofing, TCP Port 25, University Network</em></p>
+
+    <div class="references" id="references">
+        <div class="references-title">REFERENCES</div>
+        <div class="reference">[1] Cisco Systems, <a href="https://www.cisco.com/c/en/us/support/docs/ip/access-lists/26448-ACLsamples.html">"Configuring IP Access Lists," Cisco Press.</a></div>
+        <div class="reference">[2] Cisco Systems, <a href="https://www.cisco.com/c/en/us/td/docs/routers/access/800/860/software/configuration/guide/routconf.html">"Basic Routing Configuration," Cisco Documentation, 2023.</a></div>
+        <div class="reference">[3] J. Postel, <a href="https://tools.ietf.org/html/rfc5321">"Simple Mail Transfer Protocol," RFC 5321, October 2008.</a></div>
+        <div class="reference">[4] L. Peterson, B. Davie, <a href="https://www.elsevier.com/books/computer-networks/peterson/978-0-12-385059-1">"Computer Networks: A Systems Approach," Morgan Kaufmann, 2011.</a></div>
+        <div class="reference">[5] M. Kucherawy, E. Zwicky, <a href="https://tools.ietf.org/html/rfc7208">"Sender Policy Framework (SPF)," RFC 7208, April 2014.</a></div>
+    </div>
+</section>

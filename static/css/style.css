@@ -1,0 +1,633 @@
+:root {
+    --primary-color: #00629B; /* IEEE Blue */
+    --secondary-color: #003B5C; /* Darker IEEE Blue */
+    --accent-color: #A6192E; /* IEEE Garnet */
+    --light-color: #FFFFFF;
+    --text-color: #222222;
+    --border-color: #E0E0E0;
+    --shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    --transition: all 0.3s ease;
+    --line-height: 1.6;
+    --paragraph-margin: 1.2em 0;
+}
+
+:root.dark-mode {
+    --primary-color: #4D8FBE;
+    --secondary-color: #2A5A7A;
+    --accent-color: #C4455A;
+    --light-color: #121212;
+    --text-color: #E0E0E0;
+    --border-color: #333333;
+}
+
+body {
+    font-family: 'Times New Roman', Times, serif;
+    font-size: 11pt;
+    line-height: var(--line-height);
+    color: var(--text-color);
+    margin: 0;
+    padding: 0;
+    background-color: var(--light-color);
+    scroll-behavior: smooth;
+    overflow-x: hidden;
+}
+
+/* IEEE Header Styles */
+.header {
+    background: var(--primary-color);
+    color: white;
+    padding: 1rem 0;
+    text-align: center;
+    border-bottom: 4px solid var(--accent-color);
+}
+
+.header-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 1rem;
+}
+
+.journal-title {
+    font-size: 1.8rem;
+    font-weight: bold;
+    margin: 0.5rem 0;
+    letter-spacing: 0.5px;
+}
+
+.journal-subtitle {
+    font-size: 1.1rem;
+    font-weight: normal;
+    margin: 0.25rem 0;
+    font-style: italic;
+}
+
+.journal-info {
+    font-size: 0.9rem;
+    margin-top: 0.5rem;
+    opacity: 0.9;
+}
+
+/* Navigation */
+.navbar {
+    background: var(--secondary-color);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    box-shadow: var(--shadow);
+}
+
+.nav-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0.5rem 1rem;
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.nav-link {
+    color: white;
+    text-decoration: none;
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+    font-weight: 500;
+    border-radius: 3px;
+    transition: var(--transition);
+}
+
+.nav-link:hover, .nav-link.active {
+    background: var(--accent-color);
+}
+
+/* Article Navigation */
+.articles-nav {
+    background: var(--light-color);
+    border-bottom: 1px solid var(--border-color);
+    position: sticky;
+    top: 48px;
+    z-index: 999;
+    overflow-x: auto;
+}
+
+.articles-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0.5rem 1rem;
+    display: flex;
+    justify-content: flex-start;
+    gap: 0.5rem;
+}
+
+.article-link {
+    color: var(--text-color);
+    text-decoration: none;
+    padding: 0.5rem 1rem;
+    font-size: 0.85rem;
+    font-weight: 500;
+    border: 1px solid var(--border-color);
+    border-radius: 3px;
+    transition: var(--transition);
+    white-space: nowrap;
+}
+
+.article-link:hover, .article-link.active {
+    background: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+}
+
+/* IEEE Two-Column Layout */
+.container {
+    max-width: 1200px;
+    margin: 1.5rem auto;
+    padding: 0 1rem;
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    gap: 2rem;
+}
+
+.sidebar {
+    position: sticky;
+    top: 100px;
+    align-self: start;
+    padding: 1rem 0;
+}
+
+.sidebar-section {
+    margin-bottom: 1.5rem;
+}
+
+.sidebar-title {
+    font-size: 0.9rem;
+    font-weight: bold;
+    color: var(--primary-color);
+    margin-bottom: 0.5rem;
+    padding-bottom: 0.25rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.sidebar-link {
+    display: block;
+    padding: 0.4rem 0;
+    color: var(--text-color);
+    text-decoration: none;
+    font-size: 0.85rem;
+    transition: var(--transition);
+}
+
+.sidebar-link:hover, .sidebar-link.active {
+    color: var(--accent-color);
+    padding-left: 0.5rem;
+}
+
+.main-content {
+    background: var(--light-color);
+    padding: 1.5rem;
+    border-radius: 3px;
+    box-shadow: var(--shadow);
+    overflow-x: hidden;
+}
+
+/* IEEE Article Styles */
+.article-section {
+    display: none;
+    column-count: 2;
+    column-gap: 2rem;
+    text-align: justify;
+    word-wrap: break-word;
+    hyphens: auto;
+}
+
+.article-section.active-section {
+    display: block;
+}
+
+.article-section.single-column {
+    column-count: 1;
+}
+
+.article-title {
+    font-size: 1.4rem;
+    font-weight: bold;
+    margin-bottom: 1rem;
+    color: var(--primary-color);
+    column-span: all;
+    text-align: center;
+}
+
+.article-authors {
+    font-size: 0.9rem;
+    margin-bottom: 1.5rem;
+    text-align: center;
+    column-span: all;
+    font-style: italic;
+}
+
+.article-abstract {
+    margin-bottom: 1.5rem;
+    column-span: all;
+}
+
+.abstract-title {
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+}
+
+.section-title {
+    font-size: 1.1rem;
+    font-weight: bold;
+    margin: 1.5rem 0 0.8rem;
+    color: var(--primary-color);
+    column-span: all;
+}
+
+p {
+    margin: var(--paragraph-margin);
+    text-indent: 1.5em;
+    hyphens: auto;
+    word-wrap: break-word;
+}
+
+.no-indent {
+    text-indent: 0;
+}
+
+/* Images */
+.article-section img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    margin: 0 auto;
+    box-sizing: border-box;
+    padding: 0.5rem 0;
+}
+
+/* Code Blocks */
+pre {
+    background: #f8f8f8;
+    padding: 1rem;
+    border-radius: 3px;
+    overflow-x: auto;
+    word-break: break-all;
+    font-size: 0.85rem;
+    margin: 1rem 0;
+    white-space: pre-wrap;
+}
+
+/* IEEE References */
+.references {
+    margin-top: 2rem;
+    column-span: all;
+}
+
+.references-title {
+    font-weight: bold;
+    margin-bottom: 1rem;
+}
+
+.reference {
+    margin-bottom: 0.8rem;
+    font-size: 0.9rem;
+    text-indent: -1.5em;
+    padding-left: 1.5em;
+    word-wrap: break-word;
+}
+
+/* Utility Classes */
+.dark-mode-toggle {
+    position: fixed;
+    top: 15px;
+    right: 15px;
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 0.5rem;
+    border-radius: 3px;
+    cursor: pointer;
+    z-index: 1002;
+    font-size: 0.85rem;
+}
+
+.dark-mode-toggle:hover {
+    background: var(--accent-color);
+}
+
+.column-toggle {
+    position: fixed;
+    top: 55px;
+    right: 15px;
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 0.5rem;
+    border-radius: 3px;
+    cursor: pointer;
+    z-index: 1002;
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.column-toggle:hover {
+    background: var(--accent-color);
+}
+
+.back-to-top {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 3px;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    opacity: 0;
+    transition: var(--transition);
+    z-index: 1000;
+}
+
+.back-to-top.visible {
+    opacity: 1;
+}
+
+.back-to-top:hover {
+    background: var(--accent-color);
+}
+
+.settings-button {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 3px;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    opacity: 1;
+    transition: var(--transition);
+    z-index: 1000;
+}
+
+.settings-button:hover {
+    background: var(--accent-color);
+}
+
+/* Modal Styles */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1003;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-content {
+    background: var(--light-color);
+    padding: 1.5rem;
+    border-radius: 5px;
+    max-width: 500px;
+    width: 90%;
+    box-shadow: var(--shadow);
+    position: relative;
+}
+
+:root.dark-mode .modal-content {
+    background: #1E1E1E;
+}
+
+.modal-close {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: var(--text-color);
+    transition: var(--transition);
+}
+
+.modal-close:hover {
+    color: var(--accent-color);
+}
+
+.modal-title {
+    font-size: 1.4rem;
+    color: var(--primary-color);
+    margin-bottom: 1rem;
+    text-align: center;
+}
+
+.modal-description {
+    font-size: 0.9rem;
+    margin-bottom: 1.5rem;
+    text-align: center;
+}
+
+.modal-section {
+    margin-bottom: 1.5rem;
+}
+
+.modal-section h3 {
+    font-size: 1.1rem;
+    color: var(--primary-color);
+    margin-bottom: 0.5rem;
+}
+
+.modal-options {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.modal-options label {
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.modal-options input[type="radio"] {
+    accent-color: var(--primary-color);
+}
+
+.modal-options input[type="checkbox"] {
+    accent-color: var(--primary-color);
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+}
+
+.modal-button {
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: var(--transition);
+}
+
+.modal-button:hover {
+    background: var(--accent-color);
+}
+
+.modal-button-secondary {
+    background: var(--border-color);
+    color: var(--text-color);
+}
+
+.modal-button-secondary:hover {
+    background: var(--accent-color);
+    color: white;
+}
+
+.modal-close:focus,
+.modal-button:focus,
+.modal-options input:focus {
+    outline: 2px solid var(--accent-color);
+    outline-offset: 2px;
+}
+
+/* Responsive Design */
+@media (max-width: 900px) {
+    .container {
+        grid-template-columns: 1fr;
+    }
+
+    .sidebar {
+        position: static;
+        order: -1;
+    }
+
+    .article-section, .article-section.single-column {
+        column-count: 1;
+    }
+
+    .main-content {
+        padding: 1rem;
+    }
+}
+
+@media (max-width: 600px) {
+    .journal-title {
+        font-size: 1.4rem;
+    }
+
+    .nav-container {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .articles-container {
+        justify-content: flex-start;
+        padding: 0.5rem;
+    }
+
+    pre {
+        font-size: 0.8rem;
+    }
+}
+
+/* Accessibility */
+.nav-link:focus, .article-link:focus, .sidebar-link:focus,
+.back-to-top:focus, .dark-mode-toggle:focus, .settings-button:focus {
+    outline: 2px solid var(--accent-color);
+    outline-offset: 2px;
+}
+
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    border: 0;
+}
+
+.resources-box {
+    background: var(--light-color);
+    border: 1px solid var(--border-color);
+    border-radius: 3px;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+    box-shadow: var(--shadow);
+    column-span: all;
+}
+
+.resources-title {
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: var(--primary-color);
+    margin: 0 0 0.8rem;
+    text-align: center;
+}
+
+.resource-item {
+    display: flex;
+    align-items: center;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.resource-item:last-child {
+    border-bottom: none;
+}
+
+.file-icon {
+    width: 20px;
+    height: 20px;
+    margin-right: 0.5rem;
+}
+
+.resource-details {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    font-size: 0.9rem;
+}
+
+.resource-details span {
+    color: var(--text-color);
+}
+
+.download-btn {
+    background: var(--primary-color);
+    color: var(--light-color);
+    padding: 0.3rem 0.8rem;
+    border-radius: 3px;
+    text-decoration: none;
+    font-size: 0.85rem;
+    transition: var(--transition);
+}
+
+.download-btn:hover {
+    background: var(--accent-color);
+}
+
+.download-btn:focus {
+    outline: 2px solid var(--accent-color);
+    outline-offset: 2px;
+}

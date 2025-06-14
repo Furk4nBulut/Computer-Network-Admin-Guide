@@ -1,0 +1,201 @@
+{% load static  %}
+
+<section id="article4" class="article-section">
+    <div id="resources" class="resources-box">
+    <h2 class="resources-title">Resources</h2>
+    <div class="resource-item">
+        <img src="https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Ficon-library.com%2Fimages%2Ffile-icon%2Ffile-icon-28.jpg&f=1&nofb=1&ipt=c32f79da585079a968a15d585a2055db6b486f9743393e20862e5d9634c9944c" alt="File Icon" class="file-icon" />
+        <div class="resource-details">
+            <span>Cisco Packet Tracer</span>
+            <a href="{% static 'Cisco-Packet-Tracer/Article4/Mac-Adrees.pkt' %}" target="_blank" class="download-btn">Download</a>
+        </div>
+    </div>
+</div>
+
+        <h1 class="article-title">L2 - Resolving Access Issues Due to MAC Address Conflict in the Same VLAN</h1>
+        <div class="article-authors">
+            By <strong>Furkan Bulut, 210316011@ogr.cbu.edu.tr</strong><br/>
+            Department of Computer Engineering, Manisa Celal Bayar University
+        </div>
+
+        <div class="article-abstract">
+            <div class="abstract-title">Abstract</div>
+            <p class="no-indent">
+                This admin guide addresses a common Layer 2 issue where devices within the same VLAN cannot communicate due to a MAC address conflict. Using a Cisco Packet Tracer simulation, it provides a step-by-step approach to identify the conflict—caused by duplicate MAC addresses from misconfigured devices or cloning—and resolve it by clearing the switch’s MAC address table. The guide aims to enhance administrators’ understanding of Layer 2 troubleshooting and security.
+            </p>
+        </div>
+
+        <div class="section-title" id="introduction">I. INTRODUCTION</div>
+        <p>
+            In a network, devices within the same VLAN should communicate seamlessly if properly configured with IPs in the same subnet. However, a frequent Layer 2 issue arises when a MAC address conflict occurs, causing connectivity failures. This can result from man-in-the-middle (MITM) attacks, improperly cloned virtual machines, or misconfigured DHCP systems assigning duplicate MAC addresses. This admin guide uses a Cisco Packet Tracer simulation to demonstrate the problem, diagnose it, and provide a resolution strategy.
+        </p>
+        <p>
+            The scenario involves three PCs connected to a switch, where a duplicate MAC address disrupts communication between two valid devices. The guide will walk through the simulation, diagnosis, and solution, ensuring administrators can apply these techniques in real-world settings.
+        </p>
+
+        <div class="section-title" id="problem-description">II. PROBLEM DESCRIPTION AND SIMULATION SETUP</div>
+        <h3>A. Network Topology and Initial Configuration</h3>
+        <p>
+            The topology consists of one switch (Switch0) and three PCs (PC1, PC2, PC3) connected via FastEthernet ports (Fa0/1, Fa0/2, Fa0/3). All devices are assigned to VLAN 10 with the following IP configurations:
+        </p>
+        <ul>
+            <li>PC1: 192.168.1.10</li>
+            <li>PC2: 192.168.1.20</li>
+            <li>PC3: 192.168.1.30</li>
+        </ul>
+        <p>
+            Subnet mask: 255.255.255.0. The switch ports are configured as access ports in VLAN 10:
+        </p>
+        <pre>
+Switch> enable
+Switch# configure terminal
+Switch(config)# vlan 10
+Switch(config-vlan)# exit
+Switch(config)# interface range fa0/1 - 3
+Switch(config-if-range)# switchport mode access
+Switch(config-if-range)# switchport access vlan 10
+Switch(config-if-range)# exit
+        </pre>
+        <p>
+            Initially, PC1 and PC2 can ping each other successfully, as shown in the simulation overview:
+        </p>
+        <figure>
+            <img src="{% static 'article_images/article4/all_pings.png' %}" alt="Initial Ping Success Across All Devices" />
+            <figcaption><strong>Figure 1:</strong> Initial ping test showing successful communication before MAC conflict.</figcaption>
+        </figure>
+
+        <h3>B. Simulating the MAC Address Conflict</h3>
+        <p>
+            To simulate the issue, PC3’s MAC address is manually set to match PC2’s MAC address, creating a conflict. In Cisco Packet Tracer:
+        </p>
+        <ol>
+            <li>Shut down PC3.</li>
+            <li>Right-click PC3 → Config → FastEthernet → Manually set the MAC address to match PC2’s (found via PC2 → Desktop → Command Prompt → <code>ipconfig /all</code>).</li>
+            <li>Restart PC3.</li>
+        </ol>
+        <p>
+            This results in the switch receiving the same MAC address from two ports (Fa0/2 and Fa0/3), leading to unstable frame forwarding. The ping from PC2 to PC1 now fails:
+        </p>
+        <figure>
+            <img src="{% static 'article_images/article4/ping_success_fail_mac.png' %}" alt="Ping Failure Due to MAC Address Conflict" />
+            <figcaption><strong>Figure 2:</strong> Ping from PC2 to PC1 fails after PC3’s MAC is set to match PC2’s, indicating a Layer 2 conflict.</figcaption>
+        </figure>
+        <p>
+            The switch’s MAC address table becomes confused, listing the same MAC on multiple ports, as visualized below:
+        </p>
+        <figure>
+            <img src="{% static 'article_images/article4/two_same_macadress.png' %}" alt="Duplicate MAC Address in Switch Table" />
+            <figcaption><strong>Figure 3:</strong> Switch MAC address table showing the same MAC address associated with ports Fa0/2 and Fa0/3.</figcaption>
+        </figure>
+
+        <div class="section-title" id="diagnosis">III. DIAGNOSING THE MAC ADDRESS CONFLICT</div>
+        <h3>A. Understanding Layer 2 Behavior</h3>
+        <p>
+            At Layer 2, switches use the MAC address table to forward frames based on the destination MAC address. A conflict occurs when the same MAC address is learned from multiple ports, causing the switch to either drop frames or forward them unpredictably. This can stem from:
+        </p>
+        <ul>
+            <li><strong>MITM Attacks:</strong> A rogue device spoofs a legitimate MAC address.</li>
+            <li><strong>Virtual Machine Cloning:</strong> Cloned VMs retain the same MAC address.</li>
+            <li><strong>DHCP Misconfiguration:</strong> Duplicate MAC assignments due to errors.</li>
+        </ul>
+
+        <h3>B. Checking the MAC Address Table</h3>
+        <p>
+            Use the switch CLI to inspect the MAC address table:
+        </p>
+        <pre>
+Switch> enable
+Switch# show mac address-table
+        </pre>
+        <p>
+            The output will show the conflicting MAC address listed under both Fa0/2 (PC2) and Fa0/3 (PC3), confirming the issue. This is a clear indicator of a Layer 2 conflict within the same VLAN.
+        </p>
+
+        <h3>C. Additional Diagnostic Steps</h3>
+        <p>
+            In a real network, consider:
+        </p>
+        <ul>
+            <li><strong>Network Monitoring Tools:</strong> Use tools like Wireshark to detect duplicate MACs in traffic.</li>
+            <li><strong>Device Inventory:</strong> Verify all devices’ MAC addresses against records.</li>
+            <li><strong>Port Status:</strong> Check for unusual activity on affected ports with <code>show interfaces</code>.</li>
+        </ul>
+
+        <div class="section-title" id="resolution">IV. RESOLVING THE MAC ADDRESS CONFLICT</div>
+        <h3>A. Isolating the Rogue Device</h3>
+        <p>
+            The simplest solution is to isolate or reconfigure the device with the duplicate MAC (PC3). In the simulation:
+        </p>
+        <ol>
+            <li>Shut down PC3 or disconnect it from Fa0/3.</li>
+            <li>Reset PC3’s MAC address to a unique value via the Config tab.</li>
+        </ol>
+        <p>
+            However, in a real scenario, identify and isolate the rogue device (e.g., a cloned VM or attacker) to prevent recurrence.
+        </p>
+
+        <h3>B. Clearing the MAC Address Table</h3>
+        <p>
+            Alternatively, clear the switch’s dynamic MAC address table to force relearning:
+        </p>
+        <pre>
+Switch# clear mac address-table dynamic
+        </pre>
+        <figure>
+            <img src="{% static 'article_images/article4/clear_mac_From_switch.png' %}" alt="Clearing MAC Address Table" />
+            <figcaption><strong>Figure 4:</strong> CLI command to clear the MAC address table, resolving the conflict.</figcaption>
+        </figure>
+        <p>
+            This removes the duplicate entry, allowing the switch to relearn the correct MAC-to-port mapping based on current traffic.
+        </p>
+
+        <div class="section-title" id="verification">V. VERIFYING THE SOLUTION</div>
+        <h3>A. Retesting Connectivity</h3>
+        <p>
+            After clearing the MAC table or isolating PC3, retest the ping from PC2 to PC1:
+        </p>
+        <figure>
+            <img src="{% static 'article_images/article4/after_cleaning_mac.png' %}" alt="Successful Ping After Resolution" />
+            <figcaption><strong>Figure 5:</strong> Successful ping from PC2 to PC1 after clearing the MAC address table, with 0% packet loss.</figcaption>
+        </figure>
+        <p>
+            The ping succeeds, confirming the conflict is resolved. The MAC address table now correctly maps PC2’s MAC to Fa0/2 only.
+        </p>
+
+        <h3>B. Simulation File for Hands-On Practice</h3>
+        <p>
+            To practice this scenario, use the provided Cisco Packet Tracer simulation file: <a href="https://drive.google.com/drive/folders/186j5-mmLx1emWd-y5PJ-ViQ2ezrMtQ6d?usp=sharing">MAC Conflict Resolution Simulation (Cisco Packet Tracer)</a>. Follow these steps:
+        </p>
+        <ol>
+            <li>Open the file in Cisco Packet Tracer (version 8.2 recommended).</li>
+            <li>Start the simulation and observe the initial ping failure due to the MAC conflict.</li>
+            <li>Clear the MAC address table using the CLI command shown in Figure 4.</li>
+            <li>Retest the ping and confirm the successful result (Figure 5).</li>
+        </ol>
+
+        <div class="section-title" id="prevention">VI. PREVENTING FUTURE MAC ADDRESS CONFLICTS</div>
+        <p>
+            To mitigate similar issues:
+        </p>
+        <ul>
+            <li><strong>DHCP Snooping:</strong> Configure the switch to filter unauthorized DHCP servers and assign unique MACs.</li>
+            <li><strong>Dynamic ARP Inspection (DAI):</strong> Prevent ARP spoofing by validating ARP packets against the DHCP binding table.</li>
+            <li><strong>MAC Address Management:</strong> Maintain a centralized inventory of MAC addresses for all devices.</li>
+            <li><strong>Port Security:</strong> Limit the number of MAC addresses per port to prevent unauthorized devices.</li>
+        </ul>
+
+        <div class="section-title" id="conclusion">VII. CONCLUSION</div>
+        <p>
+            A MAC address conflict at Layer 2 can disrupt communication within the same VLAN, as demonstrated by the failed ping (Figure 2) due to PC3’s duplicate MAC. Diagnosing the issue with the MAC address table (Figure 3), resolving it by clearing the table (Figure 4), and verifying the fix (Figure 5) ensure network stability. Implementing security measures like DHCP Snooping and DAI can prevent future occurrences, making this guide a valuable resource for Layer 2 troubleshooting.
+        </p>
+
+        <div class="section-title" id="keywords">Keywords</div>
+        <p class="no-indent"><em>Layer 2, MAC Address Conflict, VLAN, Cisco Packet Tracer, Network Troubleshooting, DHCP Snooping, ARP Inspection</em></p>
+
+        <div class="references" id="references">
+            <div class="references-title">REFERENCES</div>
+            <div class="reference">[1] Cisco Systems, <a href="https://www.cisco.com/c/en/us/support/docs/switches/catalyst-2950-series-switches/24062-41.html">"Configuring DHCP Snooping and IP Source Guard," Cisco Press.</a></div>
+            <div class="reference">[2] Cisco Systems, <a href="https://www.cisco.com/c/en/us/td/docs/switches/lan/catalyst2950/software/release/12-1_9_ea1/configuration/guide/scg/swtrafc.html">"Understanding and Configuring Switch Security Features," Cisco Documentation, 2023.</a></div>
+            <div class="reference">[3] L. Peterson, B. Davie, <a href="https://www.elsevier.com/books/computer-networks/peterson/978-0-12-385059-1">"Computer Networks: A Systems Approach," Morgan Kaufmann, 2011.</a></div>
+        </div>
+    </section>

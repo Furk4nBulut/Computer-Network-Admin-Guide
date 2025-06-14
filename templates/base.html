@@ -1,0 +1,56 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="IEEE Style Academic Journal">
+    <link rel="icon" type="image/png" href="https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Ficons.iconarchive.com%2Ficons%2Fblackvariant%2Fbutton-ui-system-apps%2F1024%2FNetwork-icon.png&f=1&nofb=1&ipt=8ba3275985d6b0cdf90d5b064f0c9603fe8d867edd48b34a3fac4465c66e1e29" sizes="32x32">
+    <link rel="apple-touch-icon" href="https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Ficons.iconarchive.com%2Ficons%2Fblackvariant%2Fbutton-ui-system-apps%2F1024%2FNetwork-icon.png&f=1&nofb=1&ipt=8ba3275985d6b0cdf90d5b064f0c9603fe8d867edd48b34a3fac4465c66e1e29">
+    <title>Computer Networks - Admin Guide</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{%  static 'css/style.css' %}">
+    <script src="{%  static 'js/script.js' %}cript.js" defer></script>
+</head>
+<body>
+    {% include 'partials/navbar.html' %}
+
+    <!-- Preferences Modal --js>
+    {% include 'partials/modal.html' %}
+
+    <!-- Main Content -->
+    <div class="container">
+        {% include 'partials/sidebar.html' %}
+        <main class="main-content" role="main">
+            {% include 'home.html' %}
+            {% include 'about.html' %}
+            {% include 'instructor.html' %}
+            {% include 'references.html' %}
+            {% include 'resources.html' %}
+            {% include 'contact.html' %}
+            {% include 'articles/article1.html' %}
+            {% include 'articles/article2.html' %}
+            {% include 'articles/article3.html' %}
+            {% include 'articles/article4.html' %}
+            {% include 'articles/article5.html' %}
+            {% include 'articles/article6.html' %}
+            {% include 'articles/article7.html' %}
+            {% include 'articles/article8.html' %}
+            {% include 'articles/article9.html' %}
+            {% include 'articles/article10.html' %}
+        </main>
+    </div>
+
+    <!-- Back to Top Button -->
+    <button class="back-to-top" onclick="scrollToTop()" aria-label="Back to top">
+        <i class="fas fa-arrow-up"></i>
+    </button>
+
+    <!-- Settings Button -->
+    <button class="settings-button" onclick="showPreferencesModal(true)" aria-label="Open settings">
+        <i class="fas fa-cog"></i>
+    </button>
+
+    {% include 'partials/footer.html' %}
+</body>
+</html>

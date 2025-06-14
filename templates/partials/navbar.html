@@ -1,0 +1,109 @@
+    <!-- IEEE Header -->
+    <header class="header" role="banner">
+        <div class="header-container">
+            <div class="journal-title">CSE 3132 COMPUTER NETWORKS</div>
+            <div class="journal-subtitle">Admin Guide Design Project</div>
+            <div class="journal-info">Furkan Bulut, 210316011@ogr.cbu.edu.tr, Manisa Celal Bayar University</div>
+        </div>
+    </header>
+<!-- Column Layout Toggle -->
+<button class="column-toggle" onclick="toggleColumnLayout()" aria-label="Toggle column layout">
+    <i class="fas fa-columns"></i> <span id="column-label">2 Columns</span>
+</button>
+    <!-- Dark Mode Toggle -->
+    <button class="dark-mode-toggle" onclick="toggleDarkMode()" aria-label="Toggle dark mode">
+        <i class="fas fa-moon"></i>
+    </button>
+    <style>
+        /* Genel Stil */
+.nav-container {
+    display: flex;
+    align-items: center;
+}
+
+.hamburger {
+    display: none;
+    font-size: 24px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: inherit;
+}
+
+/* Mobil görünüm */
+@media (max-width: 768px) {
+    .hamburger {
+        display: block;
+    }
+
+    .nav-links {
+        display: none;
+        flex-direction: column;
+        width: 100%;
+        background-color: #333;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        z-index: 1000;
+    }
+
+    .nav-links.show {
+        display: flex;
+    }
+
+    .nav-link {
+        padding: 12px;
+        color: white;
+        text-align: center;
+        text-decoration: none;
+        border-bottom: 1px solid #444;
+    }
+}
+
+    </style>
+<!-- Navigation -->
+<nav class="navbar" role="navigation">
+    <div class="nav-container">
+        <!-- Hamburger Menu Icon -->
+        <button class="hamburger" onclick="toggleMenu()" aria-label="Toggle navigation">
+            <i class="fas fa-bars"></i>
+        </button>
+
+        <!-- Menü Linkleri -->
+        <div class="nav-links" id="navLinks">
+            <a href="" class="nav-link" onclick="showSection('home')">Home</a>
+            <a href="#about" class="nav-link" onclick="showSection('about')">About</a>
+            <a href="#instructor" class="nav-link" onclick="showSection('instructor')">Instructor</a>
+            <a href="#references" class="nav-link" onclick="showSection('references')">References</a>
+            <a href="#resources" class="nav-link" onclick="showSection('resources')">Resources</a>
+            <a href="#contact" class="nav-link" onclick="showSection('contact')">Contact</a>
+        </div>
+    </div>
+</nav>
+
+
+    <!-- Article Navigation -->
+    <nav class="articles-nav" role="navigation">
+        <div class="articles-container">
+            <a href="#article3" class="article-link" onclick="showSection('article3')">L1 - Cable Issues in Network Connectivity</a>
+            <a href="#article4" class="article-link" onclick="showSection('article4')">L2 - Resolving Access Issues Due to MAC Address Conflict in the Same VLAN</a>
+            <a href="#article5" class="article-link" onclick="showSection('article5')">L2 - Security Vulnerability with Rogue DHCP Server</a>
+            <a href="#article6" class="article-link" onclick="showSection('article6')">L3 - Security Challenges with Subnet Segmentation and Access Control</a>
+            <a href="#article2" class="article-link" onclick="showSection('article2')">L3 - Mitigating IP Blocking Issues During Cyberattacks</a>
+            <a href="#article7" class="article-link" onclick="showSection('article7')">L4 - Securing SMTP Services in University Networks</a>
+            <a href="#article10" class="article-link" onclick="showSection('article10')">L4 - TCP Three-Way Handshake Failure Due to ACK Packet Blocking</a>
+
+            <a href="#article8" class="article-link" onclick="showSection('article8')">L5 - Secure Telnet Session Management in University Campus Networks</a>
+
+            <a href="#article9" class="article-link" onclick="showSection('article9')">L6 - Addressing SSL/TLS Certificate Verification</a>
+            <a href="#article1" class="article-link" onclick="showSection('article1')">L7 - HTTP 503 Service Unavailable error</a>
+
+        </div>
+    </nav>
+
+    <script>
+    function toggleMenu() {
+        var navLinks = document.getElementById("navLinks");
+        navLinks.classList.toggle("show");
+    }
+</script>

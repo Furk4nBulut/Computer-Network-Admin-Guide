@@ -1,0 +1,219 @@
+{% load static %}
+<section id="article8" class="article-section">
+    <div id="resources" class="resources-box">
+    <h2 class="resources-title">Resources</h2>
+    <div class="resource-item">
+        <img src="https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Ficon-library.com%2Fimages%2Ffile-icon%2Ffile-icon-28.jpg&f=1&nofb=1&ipt=c32f79da585079a968a15d585a2055db6b486f9743393e20862e5d9634c9944c" alt="File Icon" class="file-icon" />
+        <div class="resource-details">
+            <span>Cisco Packet Tracer</span>
+            <a href="{% static 'Cisco-Packet-Tracer/Article8/Edu-Network-L5.pkt' %}" target="_blank" class="download-btn">Download</a>
+        </div>
+    </div>
+</div>
+
+    <h1 class="article-title">L5 - Secure Telnet Session Management in University Campus Networks</h1>
+    <div class="article-authors">
+        <strong>Furkan Bulut, 210316011@ogr.cbu.edu.tr</strong><br/>
+        Department of Computer Engineering, Manisa Celal Bayar University
+    </div>
+
+    <div class="article-abstract">
+        <div class="abstract-title">Abstract</div>
+        <p class="no-indent">
+            This admin guide tackles a critical Layer 5 (Session Layer) vulnerability in a university campus network, where unsecured Telnet sessions, lacking automatic timeouts, facilitate session hijacking, credential exposure, and resource exhaustion. The absence of robust session management policies heightens unauthorized access risks and degrades device performance. This guide provides a detailed problem definition and a comprehensive step-by-step methodology to implement Telnet session timeouts, centralized authentication via AAA with RADIUS, access restrictions through ACLs, concurrent session limits, and a transition to SSH. It ensures secure, efficient, and policy-compliant session management, validated through practical testing scenarios.
+        </p>
+    </div>
+
+    <div class="section-title" id="problem-description">1. PROBLEM DEFINITION</div>
+    <h3>1.1 Problem Overview</h3>
+    <p>
+        In the university campus network, administrators and technical staff use Telnet to access network devices (e.g., Router0 and switches) for configuration and maintenance. Operating at the Session Layer (Layer 5) of the OSI model, Telnet manages session establishment, maintenance, and termination. However, several critical vulnerabilities compromise network security and operational efficiency:
+    </p>
+    <ul>
+        <li><strong>Unencrypted Telnet Communication:</strong> Telnet transmits credentials and session data in plaintext over TCP port 23, exposing them to interception via packet-sniffing tools.</li>
+        <li><strong>Absence of Session Timeouts:</strong> Inactive sessions remain open indefinitely, allowing unauthorized users to exploit active sessions on shared devices, such as lab or staff PCs.</li>
+        <li><strong>Resource Exhaustion:</strong> Prolonged or multiple concurrent sessions consume the router’s limited Virtual Terminal (VTY) lines (typically 5-16), blocking legitimate administrative access.</li>
+        <li><strong>Session Hijacking Vulnerability:</strong> Open sessions can be hijacked by attackers to execute unauthorized commands, alter configurations, or extract sensitive network data.</li>
+        <li><strong>Uncontrolled Concurrent Sessions:</strong> Lack of limits on simultaneous sessions per user increases resource strain and complicates session tracking.</li>
+    </ul>
+    <p>
+        These issues could enable attackers to compromise network integrity, disrupt operations, or violate university security policies, necessitating robust session management solutions.
+    </p>
+    <figure>
+        <img src="{% static 'article_images/article8/campus_network.png' %}" alt="University Network Topology" />
+        <figcaption><strong>Figure 1:</strong> Network topology illustrating VLAN-separated Lab (192.168.10.0/24), Staff (192.168.20.0/24), Student (192.168.30.0/24), and Server (192.168.40.0/24) networks connected via CoreSwitch0 to Router0.</figcaption>
+    </figure>
+
+    <h3>1.2 Detailed Risks</h3>
+    <p>
+        The vulnerabilities at Layer 5 pose significant risks to the university network:
+    </p>
+    <ul>
+        <li><strong>Session Hijacking:</strong> An open Telnet session on a shared lab PC can be accessed by an unauthorized user, enabling execution of malicious commands or extraction of sensitive router configurations.</li>
+        <li><strong>Resource Overload:</strong> Excessive concurrent sessions exhaust VTY lines, preventing critical administrative tasks and causing operational downtime.</li>
+        <li><strong>Credential Exposure:</strong> Unencrypted Telnet sessions expose usernames and passwords, which attackers can intercept using tools like Wireshark.</li>
+        <li><strong>Security Policy Violations:</strong> Unmanaged sessions violate university policies requiring secure access controls and session termination.</li>
+        <li><strong>Distributed Attack Surface:</strong> Without access restrictions, any device within the network can initiate Telnet sessions, increasing the attack surface.</li>
+    </ul>
+    <figure>
+        <img src="{% static 'article_images/article8/timeout_expired.png' %}" alt="Session Timeout Expired" />
+        <figcaption><strong>Figure 2:</strong> Screenshot showing a Telnet session from a Lab PC (192.168.10.30) closing after 10 minutes of inactivity due to session timeout enforcement.</figcaption>
+    </figure>
+
+    <div class="section-title" id="solution">2. STEP-BY-STEP SOLUTION</div>
+    <p>
+        The following steps provide a comprehensive solution to mitigate Layer 5 Telnet vulnerabilities, ensuring secure session management, resource efficiency, and compliance with university security policies. The approach integrates centralized authentication, timeout policies, session limits, access controls, encryption, and monitoring.
+    </p>
+
+    <h3>2.1 Step 1: Deploy Centralized Authentication with AAA and RADIUS</h3>
+    <p>
+        Implement a RADIUS server to centralize authentication, authorization, and accounting (AAA), ensuring secure and scalable user management. This eliminates the inefficiencies of local authentication and enables detailed session logging.
+    </p>
+    <ul>
+        <li>Configure a RADIUS server (Server0, IP: 192.168.137.10) with user accounts:
+            <ul>
+                <li>Username: <code>admin1</code>, Password: <code>admin123</code> (Administrators, Privilege Level 15)</li>
+                <li>Username: <code>tech1</code>, Password: <code>tech123</code> (Technicians, Privilege Level 8)</li>
+            </ul>
+        </li>
+        <li>Integrate Router0 with the RADIUS server to authenticate Telnet sessions, falling back to local authentication if the server is unavailable.</li>
+        <li>Enable AAA accounting to log session start, duration, and commands executed for auditing purposes.</li>
+    </ul>
+    <figure>
+        <img src="{% static 'article_images/article8/login-successful.png' %}" alt="Successful Login" />
+        <figcaption><strong>Figure 3:</strong> Successful Telnet login from a Staff PC (192.168.20.10) authenticated via RADIUS, demonstrating secure access control.</figcaption>
+    </figure>
+
+    <h3>2.2 Step 2: Implement Role-Based Session Timeout Policies</h3>
+    <p>
+        Configure session timeouts to automatically terminate inactive Telnet sessions, reducing the risk of unauthorized access. Different timeouts are applied based on user roles to balance security and usability.
+    </p>
+    <ul>
+        <li>Apply <code>exec-timeout 5 0</code> on VTY lines 0-4 for technicians, closing sessions after 5 minutes of inactivity.</li>
+        <li>Apply <code>exec-timeout 10 0</code> on VTY lines 5-15 for administrators, allowing longer sessions for complex tasks.</li>
+        <li>Ensure users can reconnect after a timeout by re-authenticating with their credentials.</li>
+    </ul>
+
+    <h3>2.3 Step 3: Restrict Concurrent Sessions</h3>
+    <p>
+        Limit the number of concurrent Telnet sessions to prevent resource exhaustion and enhance session management. By default, Router0 supports 5 VTY lines, but this is reduced to optimize resource usage.
+    </p>
+    <ul>
+        <li>Configure VTY lines 0-1 to allow only 2 concurrent sessions for technicians, reserving VTY lines 5-15 for administrators.</li>
+        <li>Test by initiating multiple connections from PCs (e.g., PC0, PC1, PC2) to confirm that excess sessions are rejected with an appropriate error message.</li>
+    </ul>
+
+    <h3>2.4 Step 4: Enforce Access Restrictions with ACLs</h3>
+    <p>
+        Apply Access Control Lists (ACLs) to restrict Telnet access to authorized subnets, minimizing the attack surface. Only devices in the Admin (192.168.10.0/24) and Staff (192.168.20.0/24) VLANs are permitted to initiate sessions.
+    </p>
+    <ul>
+        <li>Create an extended ACL to permit Telnet traffic (TCP port 23) from 192.168.10.0/24 and 192.168.20.0/24 to Router0 (192.168.1.1).</li>
+        <li>Deny Telnet traffic from other subnets (e.g., Student VLAN: 192.168.30.0/24) and log violations for monitoring.</li>
+        <li>Apply the ACL to the inbound interface (GigabitEthernet0/1) of Router0.</li>
+    </ul>
+    <figure>
+        <img src="{% static 'article_images/article8/login_invalid.png' %}" alt="Invalid Login Attempt" />
+        <figcaption><strong>Figure 4:</strong> Unauthorized Telnet login attempt from a Student PC (192.168.30.10) denied due to ACL restrictions.</figcaption>
+    </figure>
+
+    <h3>2.5 Step 5: Enable Password Encryption</h3>
+    <p>
+        Protect local credentials stored on the router by enabling password encryption, mitigating risks in case of unauthorized access to device configurations.
+    </p>
+    <ul>
+        <li>Use <code>service password-encryption</code> to encrypt all plaintext passwords, including VTY and local user credentials.</li>
+    </ul>
+
+    <h3>2.6 Step 6: Transition to SSH for Enhanced Security</h3>
+    <p>
+        Replace Telnet with Secure Shell (SSH) to encrypt session data, eliminating the risk of credential exposure. SSH provides a secure alternative for remote device management.
+    </p>
+    <ul>
+        <li>Configure a domain name (e.g., <code>university.edu</code>) and generate RSA keys (2048-bit) for SSH.</li>
+        <li>Enable SSH version 2 and restrict VTY lines to accept only SSH connections, disabling Telnet.</li>
+        <li>Test SSH access from authorized PCs to confirm encrypted session establishment.</li>
+    </ul>
+
+    <h3>2.7 Step 7: Implement Session Monitoring and Logging</h3>
+    <p>
+        Enable logging to track session activity, unauthorized access attempts, and session terminations, providing visibility for troubleshooting and security audits.
+    </p>
+    <ul>
+        <li>Configure buffered logging with a sufficient buffer size (e.g., 10000 bytes) to capture Telnet/SSH session events.</li>
+        <li>Enable AAA accounting to log session start/stop times and executed commands.</li>
+        <li>Monitor ACL violations to detect unauthorized Telnet attempts.</li>
+    </ul>
+
+    <h3>2.8 Step 8: Enforce VLAN Segmentation</h3>
+    <p>
+        Use VLANs to segregate user groups (Lab, Staff, Student, Server), reducing the risk of unauthorized access across network segments.
+    </p>
+    <ul>
+        <li>Configure VLANs on CoreSwitch0 and access switches:
+            <ul>
+                <li>VLAN 10: Lab (192.168.10.0/24)</li>
+                <li>VLAN 20: Staff (192.168.20.0/24)</li>
+                <li>VLAN 30: Student (192.168.30.0/24)</li>
+                <li>VLAN 40: Server (192.168.40.0/24)</li>
+            </ul>
+        </li>
+        <li>Implement trunk ports between CoreSwitch0 and access switches to carry VLAN traffic.</li>
+        <li>Enable inter-VLAN routing on Router0 to facilitate communication between VLANs.</li>
+    </ul>
+
+    <div class="section-title" id="verification">3. VERIFICATION</div>
+    <p>
+        The solution is validated through the following test scenarios to ensure secure and efficient Telnet session management:
+    </p>
+    <ul>
+        <li><strong>Successful Authentication:</strong> Verify that a Staff PC (192.168.20.10) can log in via Telnet using RADIUS credentials (<code>admin1/admin123</code>).</li>
+        <li><strong>Role-Based Timeout Enforcement:</strong> Connect from a Lab PC (192.168.10.30) with technician credentials (<code>tech1/tech123</code>), leave idle for 5 minutes, and confirm session closure. Repeat with an admin account from a Staff PC, verifying a 10-minute timeout.</li>
+        <li><strong>Concurrent Session Limit:</strong> Attempt Telnet connections from three PCs (PC0: 192.168.10.10, PC1: 192.168.10.11, PC2: 192.168.20.10); confirm that only two technician sessions are allowed, and the third is rejected.</li>
+        <li><strong>Unauthorized Access Denial:</strong> Attempt Telnet from a Student PC (192.168.30.10); verify that access is blocked by ACLs and logged.</li>
+        <li><strong>Reconnection After Timeout:</strong> After a session timeout, reconnect from the same PC (e.g., 192.168.10.30) to confirm seamless re-authentication.</li>
+        <li><strong>Logging and Monitoring:</strong> Review logs to confirm session terminations, unauthorized access attempts, and AAA accounting records.</li>
+        <li><strong>SSH Transition Validation:</strong> After enabling SSH, test connections from authorized PCs to confirm encrypted session establishment and Telnet disablement.</li>
+    </ul>
+
+    <div class="section-title" id="prevention">4. PREVENTING FUTURE VULNERABILITIES</div>
+    <h3>4.1 Proactive Security Measures</h3>
+    <p>
+        To prevent recurrence of Layer 5 vulnerabilities, the following measures are recommended:
+    </p>
+    <ul>
+        <li><strong>Regular Audits:</strong> Conduct quarterly reviews of AAA, ACL, and timeout configurations to ensure compliance and detect misconfigurations.</li>
+        <li><strong>Network Monitoring:</strong> Deploy syslog servers or NetFlow analyzers to track session activity and detect anomalies.</li>
+        <li><strong>Firewall Integration:</strong> Use a Cisco ASA firewall to enforce stateful session inspection and block unauthorized Telnet/SSH traffic.</li>
+        <li><strong>Firmware Updates:</strong> Keep router and switch firmware updated to address known vulnerabilities.</li>
+    </ul>
+
+    <h3>4.2 Training and Documentation</h3>
+    <p>
+        Train administrators and technicians on secure session management practices, including the importance of SSH, timeout policies, and ACLs. Maintain detailed documentation of network configurations, user accounts, and logging policies to facilitate troubleshooting and audits.
+    </p>
+
+    <div class="section-title" id="conclusion">5. CONCLUSION AND RECOMMENDATIONS</div>
+    <p>
+        This admin guide addresses a critical Layer 5 vulnerability in a university campus network, where unsecured Telnet sessions without timeouts enable session hijacking, credential exposure, and resource exhaustion. By implementing centralized AAA authentication with RADIUS, role-based session timeouts (5 minutes for technicians, 10 minutes for administrators), concurrent session limits, ACL-based access restrictions, password encryption, SSH transition, VLAN segmentation, and comprehensive logging, the solution ensures secure, efficient, and policy-compliant session management. The provided screenshots validate the network topology, successful logins, denied unauthorized access, and session timeouts, offering a robust framework for network administrators. This approach mitigates immediate risks and establishes a foundation for long-term network security.
+    </p>
+    <p><strong>Recommendations:</strong></p>
+    <ul>
+        <li>Adopt SSH exclusively to eliminate Telnet’s plaintext vulnerabilities.</li>
+        <li>Implement regular security audits and monitoring to detect and prevent session-related threats.</li>
+        <li>Maintain VLAN segmentation to isolate user groups and limit unauthorized access.</li>
+        <li>Provide ongoing training for administrators and technicians on Layer 5 session management best practices.</li>
+    </ul>
+
+    <div class="section-title" id="keywords">Keywords</div>
+    <p class="no-indent"><em>Layer 5, Telnet, Session Management, Session Timeout, AAA, RADIUS, ACL, SSH, VLAN, University Network</em></p>
+
+    <div class="references" id="references">
+        <div class="references-title">REFERENCES</div>
+        <div class="reference">[1] Cisco Systems, <a href="https://www.cisco.com/c/en/us/support/docs/security-vpn/secure-shell-ssh/4145-ssh.html">"Configuring Secure Shell (SSH)," Cisco Press, 2023.</a></div>
+        <div class="reference">[2] Cisco Systems, <a href="https://www.cisco.com/c/en/us/td/docs/security/aaa/AAA_Configuration_Guide/aaa_config_guide/aaa_config.html">"AAA Configuration Guide," Cisco Documentation, 2023.</a></div>
+        <div class="reference">[3] L. Peterson, B. Davie, <a href="https://www.elsevier.com/books/computer-networks/peterson/978-0-12-385059-1">"Computer Networks: A Systems Approach," Morgan Kaufmann, 2011.</a></div>
+        <div class="reference">[4] J. Kurose, K. Ross, <a href="https://www.pearson.com/us/higher-education/product/Kurose-Computer-Networking-A-Top-Down-Approach/9780136079675.html">"Computer Networking: A Top-Down Approach," Pearson, 2017.</a></div>
+        <div class="reference">[5] RFC 2865, <a href="https://tools.ietf.org/html/rfc2865">"Remote Authentication Dial In User Service (RADIUS)," June 2000.</a></div>
+    </div>
+</section>

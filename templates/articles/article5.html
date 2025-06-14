@@ -1,0 +1,252 @@
+{% load static %}
+
+<section id="article5" class="article-section">
+    <div id="resources" class="resources-box">
+    <h2 class="resources-title">Resources</h2>
+    <div class="resource-item">
+        <img src="https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Ficon-library.com%2Fimages%2Ffile-icon%2Ffile-icon-28.jpg&f=1&nofb=1&ipt=c32f79da585079a968a15d585a2055db6b486f9743393e20862e5d9634c9944c" alt="File Icon" class="file-icon" />
+        <div class="resource-details">
+            <span>Cisco Packet Tracer</span>
+            <a href="{%  static 'Cisco-Packet-Tracer/Article5/Rogue-Dhcp-Server.pkt' %}" target="_blank" class="download-btn">Download</a>
+        </div>
+    </div>
+</div>
+
+        <h1 class="article-title">Addressing Layer 2 Security Threats from Rogue DHCP Servers</h1>
+        <div class="article-authors">
+            By <strong>Furkan Bulut, 210316011@ogr.cbu.edu.tr</strong><br/>
+            Department of Computer Engineering, Manisa Celal Bayar University
+        </div>
+
+        <div class="article-abstract">
+            <div class="abstract-title">Abstract</div>
+            <p class="no-indent">
+                A rogue DHCP server on a network can cause significant disruptions by distributing incorrect IP addresses, leading to IP conflicts and connectivity issues within the same VLAN. This admin guide provides a comprehensive approach to identify, mitigate, and prevent such Layer 2 security vulnerabilities using Cisco Packet Tracer simulations. It includes detailed diagnostics, implementation of DHCP Snooping, and verification steps to ensure network stability and security.
+            </p>
+        </div>
+
+        <div class="section-title" id="introduction">I. INTRODUCTION</div>
+        <p>
+            In modern enterprise networks, maintaining secure and reliable connectivity is paramount. However, unauthorized devices—such as rogue access points, misconfigured virtual machines, or devices introduced by guests—can pose significant security risks at Layer 2. One common threat is a rogue DHCP server, which responds to DHCP broadcast requests with incorrect IP configurations, causing IP conflicts, gateway inaccessibility, DNS failures, and disrupted network communication.
+        </p>
+        <p>
+            This admin guide uses a Cisco Packet Tracer simulation to replicate this scenario, where a rogue DHCP server disrupts a VLAN. It provides a step-by-step approach to diagnose the issue, implement DHCP Snooping as a countermeasure, verify the solution, and recommend preventive strategies. Network administrators can apply these techniques to secure their networks against similar threats.
+        </p>
+
+        <div class="section-title" id="problem-description">II. PROBLEM DESCRIPTION AND SIMULATION SETUP</div>
+        <h3>A. Understanding the Rogue DHCP Threat</h3>
+        <p>
+            A rogue DHCP server operates by responding to DHCP requests faster than the legitimate server, often assigning IPs from an incorrect subnet. This can result in:
+        </p>
+        <ul>
+            <li><strong>IP Conflicts:</strong> Multiple devices receiving overlapping IPs.</li>
+            <li><strong>Gateway Inaccessibility:</strong> Clients cannot reach the default gateway due to incorrect subnet assignments.</li>
+            <li><strong>DNS Issues:</strong> Incorrect DNS server assignments lead to name resolution failures.</li>
+            <li><strong>Network Isolation:</strong> Devices within the same VLAN cannot communicate.</li>
+        </ul>
+        <p>
+            This scenario simulates such a threat in an office network, where a rogue device (PC2) introduces a DHCP server, disrupting connectivity for legitimate clients (PC0 and PC1).
+        </p>
+
+        <h3>B. Network Topology</h3>
+        <p>
+            The simulation topology includes:
+        </p>
+        <ul>
+            <li><strong>Switch0:</strong> Central Layer 2 switch, all ports in VLAN 10.</li>
+            <li><strong>Router0:</strong> Legitimate DHCP server and gateway (IP: 192.168.1.1).</li>
+            <li><strong>PC0:</strong> DHCP client connected to Switch0 Fa0/1.</li>
+            <li><strong>PC1:</strong> DHCP client connected to Switch0 Fa0/2.</li>
+            <li><strong>PC2:</strong> Rogue DHCP server (IP: 192.168.99.1, distributing 192.168.99.0/24) connected to Switch0 Fa0/3.</li>
+        </ul>
+        <figure>
+            <img src="{% static 'article_images/article5/example_dhcp_network.png' %}" alt="Network Topology with Rogue DHCP Server" />
+            <figcaption><strong>Figure 1:</strong> Network topology with Switch0, Router0, and PCs, where PC2 acts as a rogue DHCP server.</figcaption>
+        </figure>
+
+        <h3>C. Initial Configuration</h3>
+        <p>
+            Configure Router0 as the legitimate DHCP server for VLAN 10:
+        </p>
+        <pre>
+Router> enable
+Router# configure terminal
+Router(config)# interface fa0/0
+Router(config-if)# ip address 192.168.1.1 255.255.255.0
+Router(config-if)# no shutdown
+Router(config-if)# exit
+Router(config)# ip dhcp pool VLAN10
+Router(dhcp-config)# network 192.168.1.0 255.255.255.0
+Router(dhcp-config)# default-router 192.168.1.1
+Router(dhcp-config)# exit
+        </pre>
+        <p>
+            Configure Switch0 to assign all ports to VLAN 10:
+        </p>
+        <pre>
+Switch> enable
+Switch# configure terminal
+Switch(config)# vlan 10
+Switch(config-vlan)# exit
+Switch(config)# interface range fa0/1 - 3
+Switch(config-if-range)# switchport mode access
+Switch(config-if-range)# switchport access vlan 10
+Switch(config-if-range)# exit
+Switch(config)# interface fa0/24
+Switch(config-if)# switchport mode access
+Switch(config-if)# switchport access vlan 10
+        </pre>
+        <p>
+            PC0 and PC1 initially obtain IPs from Router0 (e.g., 192.168.1.10, 192.168.1.20) and communicate successfully.
+        </p>
+
+        <h3>D. Introducing the Rogue DHCP Server</h3>
+        <p>
+            Configure PC2 as a rogue DHCP server to distribute IPs from a different subnet:
+        </p>
+        <figure>
+            <img src="{% static 'article_images/article5/dhcp_server_conf.png' %}" alt="Rogue DHCP Server Configuration on PC2" />
+            <figcaption><strong>Figure 2:</strong> PC2 configured as a rogue DHCP server, distributing IPs in the 192.168.99.0/24 range with gateway 192.168.99.1.</figcaption>
+        </figure>
+        <p>
+            Once active, PC2 responds to DHCP requests, causing PC0 or PC1 to receive incorrect IPs:
+        </p>
+        <figure>
+            <img src="{% static 'article_images/article5/pc_dhcp_conf.png' %}" alt="PC Receiving Incorrect IP from Rogue DHCP" />
+            <figcaption><strong>Figure 3:</strong> PC0 receives an incorrect IP (192.168.99.10) from the rogue DHCP server instead of 192.168.1.x.</figcaption>
+        </figure>
+        <p>
+            This leads to connectivity issues, as shown by a failed ping to the gateway:
+        </p>
+        <figure>
+            <img src="{% static 'article_images/article5/ip_dagitimi_pimg.png' %}" alt="Ping Failure Due to Rogue DHCP IP" />
+            <figcaption><strong>Figure 4:</strong> Ping from PC0 to 192.168.1.1 fails due to the incorrect IP assignment from the rogue DHCP server.</figcaption>
+        </figure>
+        <p>
+            PC0 cannot reach the gateway (192.168.1.1) or PC1, isolating it from the network.
+        </p>
+
+        <div class="section-title" id="diagnosis">III. DIAGNOSING THE ROGUE DHCP SERVER ISSUE</div>
+        <h3>A. Identifying Symptoms of Rogue DHCP Activity</h3>
+        <p>
+            The primary symptoms include:
+        </p>
+        <ul>
+            <li>Incorrect IP assignment: PCs receive IPs outside the expected 192.168.1.0/24 range.</li>
+            <li>Failed pings to the gateway or other devices in the VLAN.</li>
+            <li>Inconsistent network behavior: Some devices work while others fail to connect.</li>
+        </ul>
+        <p>
+            On PC0, check the IP configuration to confirm the issue (as shown in Figure 3). The IP 192.168.99.10 and gateway 192.168.99.1 indicate a rogue DHCP server.
+        </p>
+
+        <h3>B. Tracing the Rogue DHCP Server</h3>
+        <p>
+            To identify the rogue server:
+        </p>
+        <ol>
+            <li><strong>Inspect DHCP Offers:</strong> Use a packet capture tool like Wireshark to monitor DHCP traffic. Look for DHCP offers from unexpected sources (e.g., 192.168.99.1).</li>
+            <li><strong>Check Connected Devices:</strong> Use <code>show mac address-table</code> on the switch to map MAC addresses to ports, identifying the rogue device (PC2 on Fa0/3).</li>
+            <li><strong>Port Activity:</strong> Monitor port Fa0/3 for unusual broadcast traffic with <code>show interfaces fa0/3</code>.</li>
+        </ol>
+        <p>
+            In this simulation, PC2’s configuration (Figure 2) confirms it as the rogue DHCP server.
+        </p>
+
+        <div class="section-title" id="resolution">IV. RESOLVING THE ISSUE WITH DHCP SNOOPING</div>
+        <h3>A. Understanding DHCP Snooping</h3>
+        <p>
+            DHCP Snooping is a Layer 2 security feature that filters DHCP messages, allowing only trusted ports to send DHCP server responses. Untrusted ports (like those connected to PCs) are blocked from distributing DHCP IPs, effectively neutralizing rogue servers.
+        </p>
+
+        <h3>B. Enabling DHCP Snooping on the Switch</h3>
+        <p>
+            Configure DHCP Snooping on Switch0:
+        </p>
+        <pre>
+Switch> enable
+Switch# configure terminal
+Switch(config)# ip dhcp snooping
+Switch(config)# ip dhcp snooping vlan 10
+        </pre>
+        <figure>
+            <img src="{% static 'article_images/article5/dhcp_snooping_activate_from_switch.png' %}" alt="Activating DHCP Snooping on Switch" />
+            <figcaption><strong>Figure 5:</strong> CLI commands to enable DHCP Snooping for VLAN 10 on Switch0.</figcaption>
+        </figure>
+
+        <h3>C. Configuring Trusted Ports</h3>
+        <p>
+            Designate the port connected to Router0 (Fa0/24) as trusted, allowing only legitimate DHCP responses:
+        </p>
+        <pre>
+Switch(config)# interface fa0/24
+Switch(config-if)# ip dhcp snooping trust
+        </pre>
+        <p>
+            Ports Fa0/1 to Fa0/3 remain untrusted, blocking PC2’s rogue DHCP responses.
+        </p>
+
+        <div class="section-title" id="verification">V. VERIFYING THE SOLUTION</div>
+        <h3>A. Renewing IP Addresses on Clients</h3>
+        <p>
+            Release and renew IP addresses on PC0 and PC1 to ensure they receive IPs from Router0:
+        </p>
+        <figure>
+            <img src="{% static 'article_images/article5/clear_and_auto_conf_pcs.png' %}" alt="Releasing and Renewing IPs on PCs" />
+            <figcaption><strong>Figure 6:</strong> PC0 and PC1 set to DHCP auto-configuration, receiving correct IPs (192.168.1.x).</figcaption>
+        </figure>
+        <p>
+            Alternatively, clear DHCP bindings on the router with <code>clear ip dhcp binding *</code> and restart the PCs.
+        </p>
+
+        <h3>B. Testing Network Connectivity</h3>
+        <p>
+            Retest connectivity to confirm the solution:
+        </p>
+        <figure>
+            <img src="{% static 'article_images/article5/after_solution_ping.png' %}" alt="Successful Ping After DHCP Snooping" />
+            <figcaption><strong>Figure 7:</strong> Successful pings between PC0, PC1, and the gateway (192.168.1.1) after implementing DHCP Snooping.</figcaption>
+        </figure>
+        <p>
+            PC0 and PC1 now have IPs in the 192.168.1.x range, can ping each other, and access the gateway, confirming the rogue DHCP server is neutralized.
+        </p>
+
+        <h3>C. Hands-On Simulation</h3>
+        <p>
+            Practice this scenario with the provided simulation file: <a href="https://drive.google.com/drive/folders/1ECuJxscviTzloEiJRaHxbao768U3dLo5?usp=sharing">Rogue DHCP Resolution Simulation (Cisco Packet Tracer)</a> Steps:
+        </p>
+        <ul>
+            <li>Open in Cisco Packet Tracer (version 8.2 recommended).</li>
+            <li>Observe the initial failure due to PC2’s rogue DHCP server (Figures 3 and 4).</li>
+            <li>
+            <li>Enable DHCP Snooping (Figures 5 and 5).</li>
+            <li>Verify the fix with renewed IPs and successful pings (Figures 6 and 7).</li>
+        </ul>
+
+        <div class="section-title" id="prevention">VII. PREVENTING FUTURE ROGUE DHCP ATTACKS</div>
+        <p>
+            To prevent future incidents:
+        </p>
+        <ul>
+            <li><strong>Dynamic ARP Inspection (DAI):</strong> Validate ARP packets against DHCP bindings to prevent ARP spoofing.</li>
+            <li><strong>Port Security:</strong> Restrict the number of MAC addresses per port to block unauthorized devices.</li>
+            <li><strong>Network Access Control (NAC):</strong> Require device authentication before network access.</li>
+            <li><strong>Monitoring Tools:</strong> Use intrusion detection systems to alert on rogue DHCP activity.</li>
+        </ul>
+
+        <div class="section-title" id="conclusion">VII. CONCLUSION</div>
+        <p>
+            <p>
+            Rogue DHCP servers at Layer 2 can severely disrupt network operations by causing IP conflicts and connectivity issues, as demonstrated by the initial ping failure (Figure 4). By diagnosing the problem (Figure 3), applying DHCP Snooping (Figures 5), renewing IPs (Figure 6), and verifying the solution (Figure 7), administrators can restore network functionality and enhance security. This guide provides a practical framework for securing networks against such threats, supported by hands-on simulation.
+</p>
+
+        <div class="section-title" id="keywords">Keywords</div>
+        <p class="no-indent"><em>Layer 2, Rogue DHCP Server, DHCP Snooping, IP Conflict, VLAN, Network Security, Cisco Packet Tracer</em></p>
+
+        <div class="references" id="references">
+            <div class="references-title">REFERENCES</div>
+            <div class="reference">[1] Cisco Systems, <a href="https://www.cisco.com/c/en/us/support/docs/switches/catalyst-3750-series-switches/72846-layer2-secftrs-catl3fixed.html#c3">"Configuring DHCP Snooping," Cisco Press.</a></div>
+            <div class="reference">[2] Cisco Systems, <a href="https://www.cisco.com/c/en/us/td/docs/switches/lan/catalyst4500/12-2/46sg/Wrapper-46SG/swsecurity.html">"Layer 2 Security Features," Cisco Documentation, 2023.</a></div>
+            <div class="reference">[3] L. Peterson, B. Davie, <a href="https://www.elsevier.com/books/computer-networks/computer-networks/978-0-0-12-385059-1">"Computer Networks: A Systems Approach," Morgan Kaufmann, 2011.</a></div>
+        </div>
+    </section>
